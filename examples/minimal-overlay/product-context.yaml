@@ -1,0 +1,73 @@
+# Product Context — Acme Corp (Example)
+# A fictional company building a todo list app.
+# Replace these values with your own company's data when creating your overlay.
+
+company:
+  name: Acme Corp
+  name_meaning: ''
+  description: a simple, collaborative todo list app for small teams
+  domain: acme-todos.example.com
+  entity: Acme Corp Inc.
+  registered_address: 123 Main Street, San Francisco, CA
+  founder: Alice
+  timezone: America/Los_Angeles
+  founder_sleep: 22:00-07:00 (no notifications outside these hours)
+
+status:
+  phase: pre-build
+  current_focus: "Finalising MVP spec, choosing between React and Svelte for the frontend"
+
+market:
+  description: Small teams (2-20 people) who need a dead-simple shared todo list
+  primary_users: Remote teams, freelancers, small business owners
+  distribution: Web app + mobile web, no native apps in MVP
+  revenue_model: $5/user/month flat, 14-day free trial
+  secondary_revenue: Annual plans (2 months free), team workspace upgrades
+  competitor_landscape:
+    - Todoist — feature-heavy, premium-focused
+    - Trello — kanban-focused, overkill for simple todos
+    - Microsoft To Do — personal, not team-focused
+    - Paper lists — the real competitor (pen and paper)
+  key_differentiators:
+    - Dead simple: create, assign, complete. That's it.
+    - Real-time sync across team members
+    - No boards, no labels, no complexity
+    - Free for teams up to 3 people
+
+confirmed_decisions:
+  - PostgreSQL for persistence (simplest, most reliable)
+  - WebSocket for real-time sync (no polling)
+  - Email-only auth (no OAuth, no passwords — magic links)
+  - Stripe for payments
+  - No native mobile apps in MVP (responsive web only)
+
+tech_stack:
+  backend: Go + Chi router + PostgreSQL
+  frontend: React + TypeScript + Tailwind CSS
+  realtime: WebSocket (gorilla/websocket)
+  payments: Stripe
+  deployment: Fly.io
+  auth: Email magic links via Resend
+
+codebase_paths:
+  project_root: ~/Work/acme-todos/
+  reference_codebase: ''
+  adrs: ~/Work/acme-todos/docs/adrs/
+  architecture_plan: ~/Work/acme-todos/docs/architecture.md
+
+mvp_scope:
+  create_todos: true
+  assign_todos: true
+  complete_todos: true
+  team_invites: true
+  realtime_sync: true
+  billing: false
+  search: false
+  tags_categories: false
+  due_dates: false
+  file_attachments: false
+  mobile_apps: false
+
+founding_teams_program:
+  commission: ''
+  goal: ''

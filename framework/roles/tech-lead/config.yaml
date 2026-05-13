@@ -1,0 +1,28 @@
+_config_version: 10
+agent:
+  api_max_retries: 3
+  clarify_timeout: 600
+  disabled_toolsets:
+  - terminal
+  - browser
+  - vision
+  - video
+  - image_gen
+  - tts
+  - spotify
+  - homeassistant
+  - cronjob
+  - discord
+  gateway_auto_continue_freshness: 3600
+  gateway_notify_interval: 180
+  gateway_timeout: 1800
+  gateway_timeout_warning: 900
+  image_input_mode: auto
+  max_turns: 120
+profiles_list_cache: 2
+provider: deepseek
+model: deepseek-v4-flash
+base_url: https://api.deepseek.com
+onboarding:
+  seen:
+    tool_progress_prompt: true
