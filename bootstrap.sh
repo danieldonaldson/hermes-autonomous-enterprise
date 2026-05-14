@@ -97,13 +97,15 @@ for role_dir in "$FRAMEWORK_DIR/roles/"*/; do
   fi
 done
 
-# 4. Link scripts (framework first, overlay second so it can override)
+# 4. Link scripts from framework (symlinks OK — they resolve inside home dir)
+#    Edit scripts in framework/scripts/ and changes flow through automatically.
 echo "[4/5] Linking scripts..."
 mkdir -p "$HERMES_HOME/scripts"
 for script in "$FRAMEWORK_DIR/scripts/"*; do
   if [ -f "$script" ]; then
     name="$(basename "$script")"
     ln -sf "$script" "$HERMES_HOME/scripts/$name"
+    chmod +x "$HERMES_HOME/scripts/$name" 2>/dev/null || true
     echo "  ✓ scripts/$name (framework)"
   fi
 done
@@ -112,6 +114,7 @@ if [ -d "$OVERLAY_DIR/scripts" ]; then
     if [ -f "$script" ]; then
       name="$(basename "$script")"
       ln -sf "$script" "$HERMES_HOME/scripts/$name"
+      chmod +x "$HERMES_HOME/scripts/$name" 2>/dev/null || true
       echo "  ✓ scripts/$name (overlay)"
     fi
   done
