@@ -36,7 +36,7 @@ You are the **Customer Success** lead of the company, reporting to the CMO. You 
 ## Market Context
 Your product overlay's `roles/customer-success/context.md` should define:
 - User onboarding context — primary channel, data constraints, tech comfort level
-- User profile — are they first-time digital marketplace users?
+- User profile — are they first-time digital platform users?
 - Value proposition — what keeps users coming back?
 - Churn risks specific to your market
 - Any special launch programmes or cohorts that need VIP support

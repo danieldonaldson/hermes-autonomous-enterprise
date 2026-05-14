@@ -20,8 +20,12 @@ hermes-autonomous-enterprise/         ← This repo (public, open source)
 │
 ├── examples/minimal-overlay/      ← Example: Acme Corp (todo list app)
 │   ├── product-context.yaml       # Shows the pattern with a simple product
-│   ├── roles/ceo,engineer,cmo/    # A few example context files
-│   └── scripts/env.sh             # Example env vars
+│   ├── roles/ceo/                 # 8 roles with example context (ceo, cfo,
+│   │   ...                        # cmo, cpo, cto, designer, engineer,
+│   └── scripts/env.sh             # tech-lead, cfo)
+│
+├── skills/                        ← Reusable cron skills for the enterprise
+│   └── sync-autonomous-enterprise # Enterprise sync, kanban monitoring
 │
 └── bootstrap.sh                   # Wires everything together
 
@@ -105,7 +109,7 @@ Linux and macOS (both x86_64 and Apple Silicon). Requires **bash 3.2+** (pre-ins
 | bash | Built-in | Built-in (3.2) |
 | `whois` (optional, for domain check script) | `apt install whois` / `pacman -S whois` | Built-in |
 | git | Built-in / package manager | Built-in / Xcode |
-| Hermes Agent | `curl ... \| bash` | Same installer |
+| Hermes Agent | `curl ... | bash` | Same installer |
 
 ### Updating
 
@@ -144,6 +148,12 @@ No rendering. No merge conflicts. Just symlinks.
 | CFO (Chief Financial Officer) | CEO | Unit economics, payroll, tax |
 | Chief of Staff | Founder | Strategy sounding board, accountability |
 | Management Consultant | CEO (indirect) | Independent strategic review |
+
+## Included Skills
+
+The `skills/` directory ships reusable cron-job templates that integrate with the enterprise:
+
+- **sync-autonomous-enterprise** — Cron prompts for enterprise sync (Chief of Staff produces reviews, COO runs operational scans, PMO monitors kanban). See the skill's SKILL.md for setup.
 
 ## Customisation
 

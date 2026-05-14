@@ -40,7 +40,7 @@ Every significant decision gets an Architecture Decision Record at the path spec
 MVP decisions that need ADRs:
 - [ ] Storage strategy for MVP
 - [ ] Payment subaccount strategy (create on registration vs on first payout)
-- [ ] WhatsApp state machine design (in-memory vs DB-persisted)
+- [ ] Conversation state machine design (in-memory vs DB-persisted)
 - [ ] File watermarking approach
 - [ ] Search approach (simple query vs full-text search vs external service — simplest for MVP)
 ### 3. Code Reviewer

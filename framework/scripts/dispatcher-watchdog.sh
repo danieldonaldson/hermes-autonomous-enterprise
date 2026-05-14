@@ -8,10 +8,11 @@ set -euo pipefail
 
 KANBAN_ROOT="${HOME}/.hermes/kanban"
 
-# 1. Check gateway service is running
-if ! systemctl --user is-active --quiet hermes-gateway.service 2>/dev/null; then
-  echo "🚨 [DISPATCHER WATCHDOG] Gateway service is NOT running!"
-  systemctl --user status hermes-gateway.service 2>&1 | head -10
+# 1. Check gateway process is running
+PGID=$(pgrep -f "hermes.*gateway" 2>/dev/null || true)
+if [ -z "$PGID" ]; then
+  echo "🚨 [DISPATCHER WATCHDOG] Gateway process is NOT running!"
+  echo "    Start it with: hermes gateway start"
   exit 1
 fi
 
