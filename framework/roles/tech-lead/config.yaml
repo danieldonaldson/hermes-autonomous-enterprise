@@ -21,7 +21,7 @@ agent:
   max_turns: 120
 profiles_list_cache: 2
 provider: deepseek
-model: deepseek-v4-flash
+model: deepseek-v4-pro
 base_url: https://api.deepseek.com
 onboarding:
   seen:

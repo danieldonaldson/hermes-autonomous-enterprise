@@ -1,0 +1,65 @@
+# Product Context — {{COMPANY_NAME}}
+# All product-specific information for the autonomous enterprise.
+# Shared across every role. Each role reads this at startup.
+
+company:
+  name: YourCompany
+  name_meaning: optional, e.g. '"ours" in isiZulu'
+  description: what your company does — one sentence
+  domain: your-domain.com
+  entity: Legal entity name and registration (optional)
+  registered_address: Physical address (optional)
+  founder: Your Name
+  founder_contact: "@your_bot_username (Telegram ID 123456)"
+  timezone: EST  # or SAST, UTC, etc.
+  founder_sleep: 22:00-08:00  # no notifications during these hours
+
+status:
+  phase: pre-build  # or build, launch, growth
+  current_focus: "what the team is working on right now"
+
+market:
+  description: market you're in
+  primary_users: who uses your product
+  distribution: how you reach them (e.g. WhatsApp-native)
+  revenue_model: how you make money (e.g. commission on sales)
+  secondary_revenue: other revenue streams (optional)
+  competitor_landscape:
+    - Competitor A — notes on positioning
+    - Competitor B — notes on positioning
+  key_differentiators:
+    - Differentiator 1
+    - Differentiator 2
+
+confirmed_decisions:
+  - Decision 1 (e.g. payment provider, split)
+  - Decision 2 (e.g. no LLM in MVP)
+  - Decision 3 (e.g. tech stack choice)
+
+tech_stack:
+  backend: Language + framework
+  frontend: Language + framework
+  messaging: Platform (e.g. Meta Cloud API)
+  payments: Payment provider
+  storage: Storage solution
+  auth: Auth approach
+  pdf_watermarking: Library (optional)
+  search_mvp: Search approach for MVP
+  deployment: TBD
+
+codebase_paths:
+  project_root: ~/Work/your-project/
+  reference_codebase: ~/Work/reference-project/
+  adrs: ~/Work/your-project/docs/adrs/
+  architecture_plan: ~/Work/your-project/docs/architecture-plan.md
+
+mvp_scope:
+  feature_a: true
+  feature_b: true
+  feature_c: false
+  web_dashboard: false
+  # Add your MVP features here with true/false
+
+founding_teachers_program:
+  commission: "special terms (optional)"
+  goal: "retention and word-of-mouth growth (optional)"

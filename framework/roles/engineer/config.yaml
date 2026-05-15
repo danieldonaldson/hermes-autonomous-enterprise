@@ -12,10 +12,10 @@ agent:
   - discord
   gateway_auto_continue_freshness: 3600
   gateway_notify_interval: 180
-  gateway_timeout: 1800
-  gateway_timeout_warning: 900
+  gateway_timeout: 3600
+  gateway_timeout_warning: 1800
   image_input_mode: auto
-  max_turns: 150
+  max_turns: 300
 profiles_list_cache: 2
 provider: deepseek
 model: deepseek-v4-flash
@@ -23,3 +23,4 @@ base_url: https://api.deepseek.com
 onboarding:
   seen:
     tool_progress_prompt: true
+    openclaw_residue_cleanup: true

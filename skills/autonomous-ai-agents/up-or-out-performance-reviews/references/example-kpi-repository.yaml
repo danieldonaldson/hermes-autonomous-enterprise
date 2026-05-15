@@ -1,0 +1,180 @@
+# Example KPI Repository Structure
+# Copy and adapt this for your organisation.
+# Maintained by the RMO. Snapshotted weekly.
+# Each role self-proposes 3-5 SMART KPIs; RMO audits quality at consolidation time.
+#
+# When adding actuals, append to the `actuals` array. Never overwrite history.
+# This is what enables month-over-month trend analysis for the Up-or-Out review.
+
+version: 2
+last_updated: "2026-06-15"
+baseline_status: "23 of 66 baselines set (policy-standards + aspirational); remaining TBD pending launch data"  # update as baselines are set
+
+# --- BUCKET: GROWTH ---
+# User-data-dependent. Baselines TBD until Ops Analyst provides post-launch data.
+roles:
+
+  # ─── ENGINEER ───
+  engineer:
+    kpis:
+      - id: E1
+        name: "Average cycle time per task"
+        description: "Time from 'ready' to 'done' for all engineer tasks, averaged weekly"
+        baseline: "TBD"
+        targets:
+          "30d": "<5 days"
+          "60d": "<3 days"
+          "90d": "<2 days"
+          annual: "<2 days"
+        data_source: "kanban cycle_time metric"
+        cadence: weekly
+        direction: lower_is_better
+        owner: engineer
+        quality_gate:
+          passed: true
+          notes: "SMART — Specific (cycle time per task), Measurable (kanban metric), Achievable (plausible with current team), Relevant (directly measures delivery speed), Time-bound (weekly cadence)"
+        actuals:
+          - period: "2026-06-W1"
+            value: "4.2 days"
+          - period: "2026-06-W2"
+            value: "3.8 days"
+          - period: "2026-06-W3"
+            value: "3.1 days"
+
+      - id: E2
+        name: "Task throughput per week"
+        description: "Number of kanban tasks completed by engineer per week"
+        baseline: "TBD"
+        targets:
+          "30d": "≥3 tasks/week"
+          "60d": "≥5 tasks/week"
+          "90d": "≥7 tasks/week"
+          annual: "≥7 tasks/week"
+        data_source: "kanban throughput metric"
+        cadence: weekly
+        direction: higher_is_better
+        owner: engineer
+        quality_gate:
+          passed: true
+          notes: "SMART verified. Direction higher_is_better — calibrated to avoid quantity-over-quality gaming (paired with E7 test coverage guardrail)"
+        actuals:
+          - period: "2026-06-W1"
+            value: "4 tasks"
+          - period: "2026-06-W2"
+            value: "5 tasks"
+          - period: "2026-06-W3"
+            value: "6 tasks"
+
+      - id: E7
+        name: "Test coverage"
+        description: "Code coverage percentage for the main application codebase (excludes config, migrations, generated code)"
+        baseline: "40%"
+        targets:
+          "30d": ">60%"
+          "60d": ">70%"
+          "90d": ">80%"
+          annual: ">80%"
+        data_source: "coverage report from CI pipeline"
+        cadence: monthly
+        direction: higher_is_better
+        owner: engineer
+        quality_gate:
+          passed: true
+          notes: "SMART verified. Binding KPI (CEO-confirmed — E5 throughput is informational only). Hard to game at this cadence if CI enforces it."
+        actuals:
+          - period: "2026-06"
+            value: "45%"
+
+  # ─── RMO (self-reporting) ───
+  # RMO does NOT self-exempt. Own KPIs reviewed by COO.
+  rmo:
+    kpis:
+      - id: RMO-1
+        name: "KPI Coverage Rate"
+        description: "Percentage of roles with active, SMART-verified KPIs in the repository"
+        baseline: "0%"
+        targets:
+          "30d": ">50% roles onboarded"
+          "60d": ">80%"
+          "90d": ">90%"
+          annual: ">96%"
+        data_source: "kpi-repository.yaml role count vs total role count"
+        cadence: monthly
+        direction: higher_is_better
+        owner: rmo
+        quality_gate:
+          passed: true
+          notes: "SMART verified. Self-reported but cross-checked by COO and McKinsey Consultant."
+        actuals:
+          - period: "2026-06"
+            value: "100%"       # all 21 roles onboarded
+
+      - id: RMO-2
+        name: "OKR Completion Rate"
+        description: "Percentage of quarterly OKRs delivered on time across all roles"
+        baseline: "TBD"
+        targets:
+          "30d": "TBD (first quarter)"
+          "60d": "TBD"
+          "90d": "TBD"
+          annual: ">80%"
+        data_source: "kanban OKR tasks"
+        cadence: quarterly
+        direction: higher_is_better
+        owner: rmo
+        quality_gate:
+          passed: true
+          notes: "SMART — but targets deferred until first full OKR quarter completes. Mark Keep-awaiting-baseline until then."
+        actuals: []
+
+      - id: RMO-3
+        name: "Results Dashboard On-Time Delivery"
+        description: "Percentage of weekly Results Dashboards delivered to COO by Wednesday 9am"
+        baseline: "0%"
+        targets:
+          "30d": "80% on time"
+          "60d": "100% on time"
+          "90d": "100% on time"
+          annual: "100% on time"
+        data_source: "dashboard delivery timestamps"
+        cadence: weekly
+        direction: higher_is_better
+        owner: rmo
+        quality_gate:
+          passed: true
+          notes: "SMART verified. Start counting from day 30 to allow process settling."
+        actuals:
+          - period: "2026-06-W1"
+            value: "Yes (on time)"
+          - period: "2026-06-W2"
+            value: "Yes (on time)"
+
+      - id: RMO-4
+        name: "KPI Data Source Validation Rate"
+        description: "Percentage of active KPIs with a confirmed, working data source"
+        baseline: "0%"
+        targets:
+          "30d": ">50% validated"
+          "60d": ">75%"
+          "90d": ">90%"
+          annual: ">95%"
+        data_source: "kpi-repository.yaml data_source field verification against actual systems"
+        cadence: monthly
+        direction: higher_is_better
+        owner: rmo
+        quality_gate:
+          passed: true
+          notes: "SMART verified. Prevents 'zombie KPIs' that exist in the repo but can't actually be measured."
+        actuals:
+          - period: "2026-06"
+            value: "35%"     # many Growth/Revenue KPIs still TBD data sources
+
+  # ─── ENGINEER (continued — additional roles below) ───
+  # Each role has 3-5 KPIs following the same structure.
+  # Only representative examples shown above — real repository should have all roles.
+
+  # ─── ABSORBED ROLES ───
+  # Some roles have no individual KPI set because they were absorbed into team-level metrics
+  # (e.g. CMO absorbed into Growth, COO absorbed into Efficiency, Tech Lead absorbed into Engineer).
+  # These are confirmed by CEO and noted in the repository metadata.
+  # See: kpi-framework-ceo-approval-memo.md
