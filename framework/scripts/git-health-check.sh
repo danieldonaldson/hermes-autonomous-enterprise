@@ -92,27 +92,55 @@ if [ -d "$FRAMEWORK_SKILLS" ] && [ -d "$SKILLS_DIR" ]; then
 fi
 
 # ═══════════════════════════════════════════
-# 4. Profiles missing SOUL.md or config.yaml symlinks
+# 4. Profiles with real files where symlinks should be
 # ═══════════════════════════════════════════
-missing=""
+non_symlink=""
 for profile_dir in "$PROFILES_DIR"/*/; do
   [ -d "$profile_dir" ] || continue
   name="$(basename "$profile_dir")"
   issues=""
+  # Check for real files (not symlinks) where symlinks are expected
+  if [ -f "$profile_dir/SOUL.md" ] && [ ! -L "$profile_dir/SOUL.md" ]; then
+    issues="${issues}SOUL.md(real) "
+  fi
+  if [ -f "$profile_dir/config.yaml" ] && [ ! -L "$profile_dir/config.yaml" ]; then
+    issues="${issues}config.yaml(real) "
+  fi
+  # Check for missing files entirely
   if [ ! -e "$profile_dir/SOUL.md" ]; then
-    issues="${issues}SOUL.md "
+    issues="${issues}SOUL.md(missing) "
   fi
   if [ ! -e "$profile_dir/config.yaml" ]; then
-    issues="${issues}config.yaml "
+    issues="${issues}config.yaml(missing) "
   fi
   if [ -n "$issues" ]; then
-    missing="$missing  $name: missing $issues\n"
+    non_symlink="$non_symlink  $name: $issues\n"
   fi
 done
-if [ -n "$missing" ]; then
+if [ -n "$non_symlink" ]; then
   HAS_ISSUES=true
-  section "⚠️  Profiles Missing Key Files"
-  echo -e "$missing"
+  section "⚠️  Profile File Issues (should be symlinks to framework)"
+  echo -e "$non_symlink"
+fi
+
+# ═══════════════════════════════════════════
+# 5. Product leak scan in framework repo
+# ═══════════════════════════════════════════
+# Terms from env.sh that should NEVER appear in the framework
+if [ -f "$SCRIPT_DIR/env.sh" ]; then
+  PRODUCT_TERMS="${COMPANY_NAME:-} ${FOUNDER_NAME:-} ${PRODUCT_DOMAIN:-} ${TELEGRAM_CHAT_ID:-}"
+  # Remove empty strings
+  PRODUCT_TERMS="$(echo "$PRODUCT_TERMS" | tr ' ' '\n' | grep -v '^$' | tr '\n' '|')"
+  PRODUCT_TERMS="${PRODUCT_TERMS%|}"  # Remove trailing pipe
+  if [ -n "$PRODUCT_TERMS" ]; then
+    leaks=$(cd "$FRAMEWORK_REPO" && grep -rIn --include='*.md' --include='*.yaml' -E "$PRODUCT_TERMS" framework/roles/ framework/scripts/ 2>/dev/null | grep -v 'product-context.yaml' | grep -v 'context.md' || true)
+    if [ -n "$leaks" ]; then
+      HAS_ISSUES=true
+      section "🔴 Product Leaks in Framework Repo"
+      echo "$leaks"
+      echo "These terms belong in the overlay, not the framework."
+    fi
+  fi
 fi
 
 # ═══════════════════════════════════════════
