@@ -1,6 +1,6 @@
 ---
 name: enterprise-governance
-description: "Governance rules for the autonomous enterprise — where skills, scripts, and configs must live, what must never leak, and how changes flow."
+description: "MANDATORY — Load this BEFORE creating, patching, or moving any skill, script, role config, or profile file. Rules for where enterprise artifacts live, what must never leak into open source, and how changes flow between framework and overlay repos."
 version: 1.0.0
 author: Hermes Agent
 license: MIT
@@ -91,13 +91,24 @@ git push
 
 ## RULE 3: ZERO product data in the framework repo
 
-Before committing to the framework, audit for:
-- Company/product names (Yethu, etc.)
+Before committing to the framework, audit for product-specific terms. The health check scans for terms from `PRODUCT_BLOCKLIST` in the overlay's `env.sh`, but prevention is better than detection.
+
+**Add a PRODUCT_BLOCKLIST to your overlay's env.sh:**
+```bash
+# Terms that must NEVER appear in the framework repo
+export PRODUCT_BLOCKLIST="CompanyName FounderName product-domain.com Paystack WhatsApp R20 R150 CAPS teacher-specific-term another-leaky-term"
+```
+
+The git-health-check script uses this blocklist to scan framework files. Keep it updated — whenever you discover a term that leaked, add it to the blocklist so it can't leak again.
+
+**Common leak categories (add yours to the blocklist):**
+- Company/product names
 - Founder names
-- Pricing (R20, R150, $0.0226)
-- Market-specific terms (CAPS, WhatsApp, Paystack)
 - Domain names
-- Specific tech stack (Rust + Axum, unless it's a generic example)
+- Pricing: currency amounts (R20, R150, $0.0226)
+- Tech stack: payment processors, hosting providers, specific libraries
+- Market terms: platform names (WhatsApp, Telegram), industry jargon (CAPS, curriculum)
+- Chat IDs, bot tokens, API keys
 
 Use `git diff --cached` to review what you're about to commit. Grep for known product terms.
 
@@ -151,7 +162,7 @@ Every shunt:
 
 ## RULE 6: Cron prompt templates are in the skill, not the cron job
 
-Cron prompts that define enterprise behavior belong in the skill's `templates/prompts/` directory:
+Cron prompts that define enterprise behavior belong in the skill's `templates/prompts/` directory. See `references/product-blocklist-patterns.md` for how to construct a safe PRODUCT_BLOCKLIST in env.sh — especially the grep -E `\d` pitfall that caused a massive false-positive cascade.
 
 ```
 skills/devops/sync-autonomous-enterprise/templates/prompts/

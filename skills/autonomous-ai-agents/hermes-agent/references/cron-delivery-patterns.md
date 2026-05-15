@@ -13,7 +13,7 @@ Cron jobs can deliver to specific platform endpoints or let the system resolve d
 
 ## Why standardize on `origin`
 
-Switching from hardcoded `telegram:8691615307` to `origin` is a one-time change that future-proofs delivery:
+Switching from hardcoded `telegram:<your-chat-id>` to `origin` is a one-time change that future-proofs delivery:
 
 - **Platform migration** — if you ever switch from Telegram to Discord/Slack/Matrix, crons with hardcoded `telegram:` IDs go dark. `origin` follows whatever platform you're using at fire time.
 - **Gateway restart** — after a gateway restart or re-auth, hardcoded `telegram:` IDs can error if the platform connection renegotiates. `origin` resolves fresh each run.

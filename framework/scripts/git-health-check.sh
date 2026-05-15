@@ -126,20 +126,26 @@ fi
 # ═══════════════════════════════════════════
 # 5. Product leak scan in framework repo
 # ═══════════════════════════════════════════
-# Terms from env.sh that should NEVER appear in the framework
-if [ -f "$SCRIPT_DIR/env.sh" ]; then
-  PRODUCT_TERMS="${COMPANY_NAME:-} ${FOUNDER_NAME:-} ${PRODUCT_DOMAIN:-} ${TELEGRAM_CHAT_ID:-}"
-  # Remove empty strings
-  PRODUCT_TERMS="$(echo "$PRODUCT_TERMS" | tr ' ' '\n' | grep -v '^$' | tr '\n' '|')"
-  PRODUCT_TERMS="${PRODUCT_TERMS%|}"  # Remove trailing pipe
-  if [ -n "$PRODUCT_TERMS" ]; then
-    leaks=$(cd "$FRAMEWORK_REPO" && grep -rIn --include='*.md' --include='*.yaml' -E "$PRODUCT_TERMS" framework/roles/ framework/scripts/ 2>/dev/null | grep -v 'product-context.yaml' | grep -v 'context.md' || true)
-    if [ -n "$leaks" ]; then
-      HAS_ISSUES=true
-      section "🔴 Product Leaks in Framework Repo"
-      echo "$leaks"
-      echo "These terms belong in the overlay, not the framework."
-    fi
+# Uses PRODUCT_BLOCKLIST from env.sh (sourced by shunt before exec).
+# Falls back to individual vars if blocklist is not set.
+if [ -n "${PRODUCT_BLOCKLIST:-}" ]; then
+  SEARCH_TERMS="$PRODUCT_BLOCKLIST"
+elif [ -n "${COMPANY_NAME:-}${FOUNDER_NAME:-}${PRODUCT_DOMAIN:-}" ]; then
+  # Fallback: construct from individual vars
+  SEARCH_TERMS="${COMPANY_NAME:-} ${FOUNDER_NAME:-} ${PRODUCT_DOMAIN:-} ${TELEGRAM_CHAT_ID:-}"
+  SEARCH_TERMS="$(echo "$SEARCH_TERMS" | tr ' ' '\n' | grep -v '^$' | tr '\n' '|')"
+  SEARCH_TERMS="${SEARCH_TERMS%|}"
+fi
+
+if [ -n "${SEARCH_TERMS:-}" ]; then
+  leaks=$(cd "$FRAMEWORK_REPO" && grep -rIn --include='*.md' --include='*.yaml' -i -E "$SEARCH_TERMS" \
+    framework/roles/ framework/scripts/ skills/ \
+    2>/dev/null | grep -v 'product-context.yaml' | grep -v 'context.md' || true)
+  if [ -n "$leaks" ]; then
+    HAS_ISSUES=true
+    section "🔴 Product Leaks in Framework Repo"
+    echo "$leaks"
+    echo "These terms belong in the overlay, not the framework."
   fi
 fi
 

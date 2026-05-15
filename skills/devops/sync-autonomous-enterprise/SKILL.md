@@ -95,8 +95,15 @@ The following cron jobs implement this pattern. Full prompt templates are in
 ### Script Deployment
 
 No_agent cron scripts live in the framework repo at `framework/scripts/`.
-Bootstrap.sh symlinks them to `~/.hermes/scripts/` — edit the framework copy
-and changes flow through automatically.
+`bootstrap.sh` generates **shunt scripts** in `~/.hermes/scripts/` — real
+files that source `env.sh` then `exec` the framework canonical version.
+Shunts are mandatory (not optional) because the cron scheduler rejects
+symlinks whose targets resolve outside `~/.hermes/scripts/`.
+
+**Adding a new script:**
+1. Create it in `framework/scripts/`
+2. Re-run `bootstrap.sh` to generate the shunt in `~/.hermes/scripts/`
+3. Commit the framework script + the regenerated shunt
 
 ```bash
 # Create a new no_agent script
@@ -105,15 +112,19 @@ cat > framework/scripts/health-check.sh << 'EOF'
 echo "Health check OK"
 EOF
 chmod +x framework/scripts/health-check.sh
-ln -sf "$PWD/framework/scripts/health-check.sh" ~/.hermes/scripts/
-git add framework/scripts/health-check.sh
-git commit -m "feat: add health-check no_agent script"
+
+# Re-run bootstrap to generate the shunt (real file, not symlink)
+./bootstrap.sh /path/to/overlay
 
 # Register the cron job
 hermes cron create "Health Check" \
   --schedule "*/15 * * * *" \
   --script health-check.sh \
   --deliver origin
+
+# Commit both
+git add framework/scripts/health-check.sh
+git commit -m "feat: add health-check no_agent script"
 ```
 
 ### Loading Skills from the Framework Repo

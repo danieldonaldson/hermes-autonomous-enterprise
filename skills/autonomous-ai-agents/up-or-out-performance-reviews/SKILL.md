@@ -414,31 +414,30 @@ Sensitivity:
   - If <key assumption> changes by X, my KPIs shift by Y
 ```
 
-### Concrete Example (Yethu, SA teacher marketplace)
+### Concrete Example (generic SaaS marketplace)
 
 ```yaml
-# BHAG: R1M ARR by Year 3 (month 36)
+# BHAG: $1M ARR by Year 3 (month 36)
 
 # Finance back-calculation:
-#   R1M ARR ÷ 12 = R83,333 MRR
-#   At 20% commission on R150 ATV = 2,778 txns/month
-#   → Break-even MAU: ~1,389 (at 2 txns/buyer/month)
-#   → Year 1: R16.8K MRR, Year 2: R61.6K MRR, Year 3: R83.3K MRR
+#   $1M ARR ÷ 12 = $83,333 MRR
+#   At 20% commission on $50 ATV = 8,333 txns/month
+#   → Break-even MAU: ~4,167 (at 2 txns/buyer/month)
+#   → Year 1: $16.8K MRR, Year 2: $61.6K MRR, Year 3: $83.3K MRR
 
 # Growth back-calculation:
-#   556 txns/month (at R150 ATV, if ARR = GMV not commission)
-#   At 5% buyer conversion rate → 11,120 search events/month
-#   At 40% MAU searching → 27,800 MAU needed
+#   8,333 txns/month (at $50 ATV)
+#   At 5% buyer conversion rate → 166,660 search events/month
+#   At 40% MAU searching → 416,650 MAU needed
 #   Churn must be <5% (not 8%) to sustain retention
-#   → Year 1: 2K MAU, Year 2: 12K MAU, Year 3: 28K MAU
+#   → Year 1: 30K MAU, Year 2: 180K MAU, Year 3: 417K MAU
 
 # Product back-calculation:
-#   556 txns/month with 25% repeat purchase rate
-#   → 417 new buyers/month
-#   At 12% search→purchase conversion → 3,475 searches/month
-#   At 5% of listings sell/month → 11,120 listings needed
-#   Full curriculum coverage (96 subjects × grades) by Year 2
-#   → Year 1: 500 listings, Year 2: 4K listings, Year 3: 11K listings
+#   8,333 txns/month with 25% repeat purchase rate
+#   → 6,250 new buyers/month
+#   At 12% search→purchase conversion → 52,083 searches/month
+#   At 5% of listings sell/month → 166,660 listings needed
+#   → Year 1: 5K listings, Year 2: 40K listings, Year 3: 167K listings
 ```
 
 ### Cross-Team Convergence
