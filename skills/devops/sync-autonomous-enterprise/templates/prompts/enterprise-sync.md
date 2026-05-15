@@ -48,7 +48,8 @@ CRITICAL RULE: NEVER return [SILENT]. Produce a structured sync every time.
    - Strategic decisions (pricing, scope, partnership, legal)
    - Repeated failure patterns
 5. **Check founder-review backlog** — read `docs/founder-review/README.md` in the overlay repo for any files waiting on founder sign-off. Flag unreviewed items in the sync (they're easy to miss otherwise).
-6. Save to `~/.hermes/plans/enterprise-sync-$(date +%Y-%m-%d-%H%M).md`
+6. **Cross-functional dependency scan** — for tasks completed since the last sync, read their summaries. If a task proposes budget/features/gaps that need other roles but no follow-up tasks exist for those roles, flag it in the sync with 🟡 \"Unspawned dependency\". This catches cases where an agent didn't realise their work needed someone else's input.
+7. Save to `~/.hermes/plans/enterprise-sync-$(date +%Y-%m-%d-%H%M).md`
 
 ## Presenting the "Needs Your Review" section
 
