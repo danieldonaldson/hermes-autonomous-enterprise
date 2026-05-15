@@ -1,7 +1,7 @@
 ---
 name: kanban-worker
 description: Pitfalls, examples, and edge cases for Hermes Kanban workers. The lifecycle itself is auto-injected into every worker's system prompt as KANBAN_GUIDANCE (from agent/prompt_builder.py); this skill is what you load when you want deeper detail on specific scenarios.
-version: 2.4.0
+version: 2.5.0
 platforms: [linux, macos, windows]
 metadata:
   hermes:
@@ -47,22 +47,39 @@ When your task produces **durable artifacts** — docs, reports, designs, config
 | Support artifacts (FAQ, response templates, onboarding sequences) | `docs/support/<topic>.md` |
 | Outreach artifacts (seed messages, channel docs, community) | `docs/community-outreach/<topic>.md` |
 
-**How to write.**
+**How to write (founder-review flow).**
 
-1. Create or overwrite the file at the designated output path. Use the scratch workspace for intermediate files, then copy the final artifact to the overlay path.
-2. cd to the overlay repo and commit:
+1. Create the file in your scratch workspace. Use the scratch directory for intermediate files.
+2. Copy the final artifact to `docs/founder-review/<topic>.md` in the overlay repo:
+   ```bash
+   cp <scratch-file> ~/Work/hermes-yethu-overlay/docs/founder-review/<topic>.md
+   ```
+3. **VERIFY the file exists at the target path.** Run this before completing:
+   ```bash
+   ls -la ~/Work/hermes-yethu-overlay/docs/founder-review/<topic>.md
+   ```
+   The file must show up in `ls` output as a real file (not empty, not "No such file or directory"). If it doesn't, you wrote to the wrong path — copy it again to the correct overlay path. Do NOT trust your own claim that you wrote it; the `ls` output is the ground truth.
+4. Mention the artifact path in your `kanban_complete` summary so the founder knows what to review and the promotion agent knows where the file lives.
+
+**Do NOT git commit.** Writing the file to the persistent overlay filesystem (`~/Work/hermes-yethu-overlay/`) is sufficient to prevent GC. Git commits are managed by the founder when approving files for promotion. Files in `docs/founder-review/` are working documents, not canonical company docs.
+
+**How to promote (after founder approval).** Once the founder signs off on a file in `docs/founder-review/`:
+
+1. Move it to its permanent destination (see destination table above)
+2. Commit with a promotion message:
    ```bash
    cd ~/Work/hermes-yethu-overlay
-   git add docs/product/seed-messages.md
-   git commit -m "docs: seed messages for teacher community outreach"
+   git mv docs/founder-review/<topic>.md docs/<category>/<topic>.md
+   git commit -m "promote: <topic> approved and moved to docs/<category>/"
+   git push
    ```
-3. If a remote is configured (check `git remote -v`), push. If local-only (no remote), skip the push — the commit is still on disk.
-4. Mention the committed artifact path in your `kanban_complete` summary so downstream agents can find it.
+3. Update `docs/founder-review/README.md` to mark the item as approved
 
 **Pitfalls.**
 
 - **Scratch-only output = data loss.** If you write output files only to `$HERMES_KANBAN_WORKSPACE`, they vanish when the task is archived. Always copy durable artifacts to the overlay path.
-- **No `output_path` in task body.** If the task body doesn't specify one, pick the best-fitting docs subdirectory and mention it in your handoff summary so the orchestrator adds it to future task bodies.
+- **Don't hallucinate file writes.** Claiming "written to ~/Work/hermes-yethu-overlay/docs/" in your summary without actually writing the file to that path is data loss — the next run has no idea the file was supposed to exist. This is the #1 cause of lost agent artifacts. If you only created the file inside the scratch workspace (which gets GC'd when the task is archived) or hallucinated the write entirely, it's gone when your process exits. **Verify on every document-producing task:** run `ls -la` on the overlay path to confirm the file exists on the persistent filesystem — do NOT trust your own claim that you wrote it.
+- **No `output_path` in task body.** If the task body doesn't specify one, write to `docs/founder-review/` and mention it in your handoff summary so the orchestrator adds it to future task bodies.
 - **Overlay repo not found.** If `~/Work/hermes-yethu-overlay/` doesn't exist, check the task body for an alternative overlay path. If none exists, write to scratch and block with `help-needed: output path not found — need to configure overlay repo for persistent storage`.
 - **Git conflicts.** If the overlay has uncommitted changes from other agents, just `git add` your file — don't touch unrelated files. If a merge conflict occurs, block with `help-needed: git conflict in overlay — needs human resolution`.
 - **Don't modify other agents' files.** Only write to your designated output path. The overlay docs tree is shared across all agents — treat it like a collaborative wiki, not your private workspace.

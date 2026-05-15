@@ -87,6 +87,7 @@ Not everything needs founder input — the CoS only flags:
 - Strategic decisions (pricing, scope, partnership, legal)
 - Repeated failure patterns
 - Red/Yellow escalations since last sync
+- **Unreviewed items in `docs/founder-review/`** — the CoS checks the backlog each sync and flags any files waiting on founder sign-off
 
 Routine in-progress work and green-status items are reported for awareness
 but don't need a response.

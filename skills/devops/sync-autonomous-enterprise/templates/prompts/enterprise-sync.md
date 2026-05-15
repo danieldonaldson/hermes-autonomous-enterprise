@@ -47,7 +47,30 @@ CRITICAL RULE: NEVER return [SILENT]. Produce a structured sync every time.
    - Completed tasks needing founder sign-off
    - Strategic decisions (pricing, scope, partnership, legal)
    - Repeated failure patterns
-5. Save to `~/.hermes/plans/enterprise-sync-$(date +%Y-%m-%d-%H%M).md`
+5. **Check founder-review backlog** — read `docs/founder-review/README.md` in the overlay repo for any files waiting on founder sign-off. Flag unreviewed items in the sync (they're easy to miss otherwise).
+6. Save to `~/.hermes/plans/enterprise-sync-$(date +%Y-%m-%d-%H%M).md`
+
+## Presenting the "Needs Your Review" section
+
+Group items by what the founder needs to do:
+
+```
+─── NEEDS YOUR REVIEW ───
+
+🔴 ITEM 1 — [short title]
+  What: [1-2 sentence summary]
+  Action: [read, approve, override, decide]
+  Time: [X min]
+
+🟡 ITEM 2 — [short title]
+  ...
+
+✅ ITEM 3 — [for awareness, no action]
+```
+
+Use 🔴 for action-required, 🟡 for decisions to weigh in on,
+✅ for awareness. Number items so the founder can reply with
+"review 3" or "approve 1". Keep brief — the founder scans.
 
 ## What NOT to do
 
