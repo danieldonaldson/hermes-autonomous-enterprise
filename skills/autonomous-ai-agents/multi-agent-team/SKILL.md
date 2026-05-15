@@ -772,8 +772,14 @@ For projects with complex architecture decisions, a single CTO role that both de
 
 ```
 CTO (Architect)
-  ├── Tech Lead (Discourse partner + Code reviewer)
-  └── Engineer (Implementer)
+  ├── Tech Lead (Discourse partner + Code reviewer — NEVER writes code)
+  └── Engineer (Implementer — only producer of code)
+
+**Critical role boundary:** Tech Lead's job is decompose → gate → review,
+not implement. C-level agents MUST assign spec/architecture tasks to Tech
+Lead, not code implementation tasks. If a task says "Fix X in file.rs" or
+"Implement Y per spec", it goes to Engineer — Tech Lead decomposes and
+reviews, they do not write the code themselves.
 ```
 
 ### The Flow

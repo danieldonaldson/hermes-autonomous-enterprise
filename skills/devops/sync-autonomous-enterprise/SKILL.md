@@ -40,6 +40,16 @@ KPI Framework → C-levels decompose KPIs → Teams execute
 their department's KPIs into granular kanban tasks (≤30 min, single outcome)
 for their direct reports. Tech Lead gates task granularity before work starts.
 
+   ⚠️ **Critical: Tech Lead NEVER writes code.** The chain is:
+   ```
+   C-level creates spec/architecture task → Tech Lead decomposes into Engineer
+   (≤30min, ≤3 files) tasks → Engineer implements → Tech Lead reviews
+   ```
+   C-levels must NOT assign implementation tasks (code fixes, feature builds,
+   migrations) directly to Tech Lead. They belong to the Engineer. Tech Lead's
+   role is decompose → gate → review, not implement. This is the most common
+   role-boundary violation in autonomous teams.
+
 **2. Enterprise Sync (every 4 hours)** — Chief of Staff scans the board and
 produces a department-by-department presentation for the founder:
 - ✅ Completed since last sync
@@ -58,7 +68,13 @@ asynchronously — no meeting needed.
 
 ### Founder Interaction Model
 
-Each item in the sync's "Needs Your Review" section has three responses:
+There are two distinct founder review modes:
+
+#### Mode A: Async Sync (Cron-Driven)
+
+The Chief of Staff delivers an Enterprise Sync presentation to the founder's
+channel every 4 hours. The founder reads at their convenience and responds
+with one of three commands. An agent processes them asynchronously.
 
 | Response | What the agent does |
 |----------|---------------------|
@@ -74,6 +90,45 @@ Not everything needs founder input — the CoS only flags:
 
 Routine in-progress work and green-status items are reported for awareness
 but don't need a response.
+
+#### Mode B: Live Interactive Review (Founder-Driven)
+
+When the founder proactively asks "what's been done?" or "let's review",
+switch to a synchronous live session. Unlike the cron-driven sync, the
+founder is in the chat and can ask follow-ups and make decisions on the spot.
+
+**Structure a live review like this:**
+
+```
+## Team Status — <date>
+
+### 🔴 Needs Your Action
+Items only the founder can unblock — blocked tasks, sign-offs, decisions.
+Each has: task ID, what's required, estimated effort.
+
+### 🟡 Worth Reviewing
+Completed work the founder should scan — architecture decisions, launch
+criteria sign-offs, financial models. Each has: what was produced, key
+findings, file paths.
+
+### ✅ Awareness (No Action Needed)
+Routine completions, green-status items, things that worked.
+```
+
+**During the review:**
+- Let the founder ask follow-ups on any item — "open it", "tell me more",
+  "what about X?"
+- When a decision is made, **record it immediately** in the relevant document
+  (launch criteria, ADR, KPI record). Do not make a mental note.
+- If the founder corrects or clarifies a decision, update the document on the
+  spot — the correction is binding.
+- After the session, commit any document changes to the overlay repo.
+
+**Key difference from async mode:** In async mode, the CoS packages everything
+up and waits. In live mode, the founder drives — you surface the right items
+for each category and let them dig into what matters.
+
+See `references/founder-review-session.md` for a worked example.
 
 ## Cron Job Setup
 
@@ -182,4 +237,5 @@ a crew of autonomous AI agents building the founder's product.
 - `framework/scripts/` — no-agent scripts (review-router, kanban-gc, git-health-check)
 - `templates/prompts/` — full cron job prompts
 - `references/sync-example.md` — example sync output + founder interaction
+- `references/founder-review-session.md` — worked example of a live founder review session (🔴/🟡/✅ format, decision recording, post-session commit)
 - `enterprise-governance` skill — rules for where enterprise artifacts live and how changes flow
