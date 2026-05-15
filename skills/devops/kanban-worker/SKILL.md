@@ -27,11 +27,25 @@ Your workspace kind determines how you should behave inside `$HERMES_KANBAN_WORK
 
 When your task produces **durable artifacts** — docs, reports, designs, configuration, or any file that should outlive the task — write them to a persistent location outside the scratch workspace. A scratch workspace gets garbage-collected when the task is archived; any artifact left only in the scratch dir is lost.
 
-**FOUNDER-REVIEW WORKFLOW:** Unless the task body explicitly says otherwise (e.g. `output_path:` pointing to a final location), write ALL non-code artifacts to the founder-review directory. This gives the founder a chance to review before they become canonical company docs.
+**FOUNDER-REVIEW WORKFLOW:** Unless the task body explicitly says otherwise (e.g. `output_path:` pointing to a final path), write ALL non-code artifacts to `docs/founder-review/`. This gives the founder a chance to review before they become canonical company docs.
 
 - **All non-code deliverables** (FAQ, templates, guides, plans, specs, reports, designs) → `docs/founder-review/<topic>.md`
 - **Code changes** (migrations, source files, configs) → commit to the codebase directly (skip founder-review, the CTO/Tech Lead review handles these)
 - **Engineering specs, ADRs, architecture notes** → `docs/adrs/` or `docs/engineering/` (assumes CTO/CPO approval chain, not founder-review)
+
+**Where to move after founder approval.** Once the founder signs off, the file is promoted to its permanent location:
+
+| Artifact type | Destination |
+|---|---|
+| Product content (blog posts, seed messages, user guides, launch copy) | `docs/product/<topic>.md` |
+| Engineering docs (ADR summaries, architecture notes, API specs) | `docs/engineering/<topic>.md` |
+| Design docs (UX specs, wireframes, design system docs) | `docs/design/<topic>.md` |
+| Operations artifacts (process docs, dashboards, SOPs, audit reports) | `docs/operations/<topic>.md` |
+| Finance artifacts (pricing models, unit economics, cost analysis) | `docs/finance/<topic>.md` |
+| Legal artifacts (compliance docs, POPIA notes, contract templates) | `docs/legal/<topic>.md` |
+| Research artifacts (interview guides, synthesis reports, competitive analysis) | `docs/research/<topic>.md` |
+| Support artifacts (FAQ, response templates, onboarding sequences) | `docs/support/<topic>.md` |
+| Outreach artifacts (seed messages, channel docs, community) | `docs/community-outreach/<topic>.md` |
 
 **How to write.**
 
