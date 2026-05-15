@@ -216,6 +216,8 @@ cd ~/Work/hermes-autonomous-enterprise && git status --short
 cd ~/Work/hermes-yethu-overlay && git status --short
 ```
 
+See `references/product-leak-detection.md` for grep -E compatibility notes (the `\d` pitfall), PRODUCT_BLOCKLIST format, and testing procedure.
+
 ## When Loading This Skill
 
 This skill should be loaded by ALL enterprise agents. Add it to the `hermes-agent` skill's related_skills or configure cron jobs to preload it. The daily git-health-check already enforces compliance — but prevention is better than detection.
