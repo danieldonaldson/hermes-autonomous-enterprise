@@ -6,7 +6,7 @@ platforms: [linux, macos]
 metadata:
   hermes:
     tags: [enterprise, sync, autonomous, orchestration, kpi]
-    related_skills: [multi-agent-team, kanban-worker, hermes-agent]
+    related_skills: [multi-agent-team, kanban-worker, hermes-agent, enterprise-governance]
 ---
 
 # Sync Autonomous Enterprise
@@ -90,6 +90,7 @@ The following cron jobs implement this pattern. Full prompt templates are in
 | CEO Daily Strategy Check | `25 9 * * *` | agent | Strategic pulse |
 | PMO Housekeeping | `0 3 * * 0` | no_agent script | Kanban GC (weekly) |
 | Up-or-Out Monthly | `0 9 1 * *` | agent | Monthly performance review |
+| Git Health Check | `0 9 * * *` | no_agent script | Daily audit: uncommitted changes, unpushed commits, broken symlinks, local-only skills, product leaks |
 
 ### Script Deployment
 
@@ -155,6 +156,7 @@ a crew of autonomous AI agents building the founder's product.
 
 - `kanban-worker` — for all kanban-board-reading agents
 - `multi-agent-team` — for C-level agents that need the team coordination protocol
+- `enterprise-governance` — for all enterprise agents; defines where skills, scripts, and configs must live and what must never leak
 
 ## Escalation Protocol
 
@@ -166,6 +168,7 @@ a crew of autonomous AI agents building the founder's product.
 ## See Also
 
 - `framework/escalation/` — escalation protocol templates
-- `framework/scripts/` — no-agent scripts (review-router, kanban-gc)
+- `framework/scripts/` — no-agent scripts (review-router, kanban-gc, git-health-check)
 - `templates/prompts/` — full cron job prompts
 - `references/sync-example.md` — example sync output + founder interaction
+- `enterprise-governance` skill — rules for where enterprise artifacts live and how changes flow

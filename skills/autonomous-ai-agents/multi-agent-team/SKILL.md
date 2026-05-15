@@ -8,7 +8,7 @@ platforms: [linux, macos, windows]
 metadata:
   hermes:
     tags: [multi-agent, profiles, kanban, orchestration, teamwork]
-    related_skills: [hermes-agent, kanban-orchestrator, kanban-worker, hermes-config-as-code]
+    related_skills: [hermes-agent, kanban-orchestrator, kanban-worker, hermes-config-as-code, enterprise-governance]
 ---
 
 # Multi-Agent Executive Team

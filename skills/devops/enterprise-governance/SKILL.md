@@ -208,3 +208,5 @@ cd ~/Work/hermes-yethu-overlay && git status --short
 ## When Loading This Skill
 
 This skill should be loaded by ALL enterprise agents. Add it to the `hermes-agent` skill's related_skills or configure cron jobs to preload it. The daily git-health-check already enforces compliance — but prevention is better than detection.
+
+See `references/audit-example-2026-05.md` for a concrete walkthrough of an audit and remediation session.

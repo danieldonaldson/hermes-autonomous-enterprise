@@ -8,7 +8,7 @@ platforms: [linux, macos, windows]
 metadata:
   hermes:
     tags: [config, profiles, overlays, bootstrapping, version-control, dotfiles, symlinks]
-    related_skills: [multi-agent-team, hermes-agent]
+    related_skills: [multi-agent-team, hermes-agent, enterprise-governance]
 ---
 
 # Hermes Config as Code
@@ -378,15 +378,23 @@ An open-source framework repo should make its structure immediately accessible:
 
 1. **Over-engineering the approach.** Do NOT build a template rendering engine with `{{PLACEHOLDER}}` substitution. Do NOT create an onboarding agent that generates files. Do NOT write a sync agent. Do NOT build a rendering pipeline. Just symlink real files and tell the agent to read them from its profile directory. The simplest approach that works is the right one — the user will correct you if you build complexity they didn't ask for. Real signals from one session: "why cant we just tell the agents to refer to product specific files?" -> killed template rendering. "i dont think we need the sync anymore then?" -> killed sync agent. "why are scripts and cron product specific?" -> moved scripts to framework, parameterized via env.sh. Each correction pointed toward less machinery, not more.
 
-1.5. **Profile name doesn't match any framework role name.** The bootstrap script creates symlinks for every role in `framework/roles/`. If a profile's name has no matching role directory in the framework (e.g. a profile called `finance` when the framework calls the role `cfo`), the symlinks point to a non-existent path — they're **broken**. Hermes falls back to default config and the profile has no SOUL.md.
+1.5. **Profile name doesn't match any framework role name.** The bootstrap script creates symlinks for every role in `framework/roles/`. If a profile's name has no matching role directory in the framework, the symlinks point to a non-existent path — they're **broken**. Hermes falls back to default config and the profile has no SOUL.md.
 
-   **Fix:** Remove the broken symlinks and create real files in the profile directory, adapted from the closest matching framework role:
+   **Concrete examples seen in the wild:**
+   - Profile `mckinsey-consultant` but framework role is `management-consultant`. Fix: symlink profile SOUL.md + config.yaml directly to `framework/roles/management-consultant/`.
+   - Profile `finance` but framework role is `cfo`. Fix: symlink profile SOUL.md + config.yaml directly to `framework/roles/cfo/`. No need to create a new framework role — finance IS the CFO.
+
+   **Better fix (when the profile name is a synonym of a framework role):** Don't create real files. Just point the profile symlinks directly to the framework role that represents the same function:
 
    ```bash
-   rm ~/.hermes/profiles/<name>/SOUL.md ~/.hermes/profiles/<name>/config.yaml
+   rm ~/.hermes/profiles/<profile-name>/SOUL.md ~/.hermes/profiles/<profile-name>/config.yaml
+   ln -sf /path/to/framework/roles/<framework-role>/SOUL.md ~/.hermes/profiles/<profile-name>/SOUL.md
+   ln -sf /path/to/framework/roles/<framework-role>/config.yaml ~/.hermes/profiles/<profile-name>/config.yaml
    ```
 
-   Then create `SOUL.md` (copy from `framework/roles/<closest-match>/SOUL.md`, replacing role references) and `config.yaml` (copy from the matching role's config.yaml). The overlay's per-role `context.md` already handles product-specific content — the SOUL.md only needs the structural persona and escalation protocol.
+   The overlay's per-role `context.md` handles product-specific content — the profile gets the structural persona from the framework role it maps to.
+
+   **Fallback fix (when the profile genuinely has no framework equivalent):** Remove the broken symlinks and create real files in the profile directory, adapted from the closest matching framework role:
 
    **Detection:** Find all broken symlinks across profiles:
    ```bash
