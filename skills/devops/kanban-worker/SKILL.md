@@ -1,7 +1,7 @@
 ---
 name: kanban-worker
 description: Pitfalls, examples, and edge cases for Hermes Kanban workers. The lifecycle itself is auto-injected into every worker's system prompt as KANBAN_GUIDANCE (from agent/prompt_builder.py); this skill is what you load when you want deeper detail on specific scenarios.
-version: 2.5.0
+version: 2.6.0
 platforms: [linux, macos, windows]
 metadata:
   hermes:
@@ -332,6 +332,21 @@ kanban_block(reason="Rate limit key choice: IP (simple, NAT-unsafe) or user_id (
 
 The block message is what appears in the dashboard / gateway notifier. The comment is the deeper context a human reads when they open the task.
 
+### Best pattern: offer concrete options
+
+When the task is blocked on a **human action** (not a decision), offer 2-3 specific, low-friction options with estimated effort so the human can pick the fastest path to unblock:
+
+```python
+kanban_block(reason="Need 1 small human action to unblock 2 interviews: Option A (2 min) — WhatsApp-forward recruitment message to 2 SA teachers. Option B (1 min) — share 2 Telegram handles. Option C (5 min) — post in 1 Facebook group.")
+```
+
+Three rules:
+1. **Name the options** — Option A, B, C. Don't make the human invent the path.
+2. **Estimate the time** — "(2 min)" lets the human pick the fastest option.
+3. **Describe the value** — What does this unlock?
+
+This works because the human scans the block reason and immediately sees the fastest path without reading a comment first.
+
 ## Heartbeats worth sending
 
 Good heartbeats name progress: `"epoch 12/50, loss 0.31"`, `"scanned 1.2M/2.4M rows"`, `"uploaded 47/120 videos"`.
@@ -396,6 +411,8 @@ If you open the task and `kanban_show` returns `runs: [...]` with one or more cl
 - Modify files outside `$HERMES_KANBAN_WORKSPACE` unless the task body says to.
 - Create follow-up tasks assigned to yourself — assign to the right specialist.
 - Complete a task you didn't actually finish. Block it instead.
+- Complete a task whose writeup or recommendations create work for other roles, without spawning kanban tasks for them. If your report proposes a budget, create a task for Finance. If it proposes a feature change, create a task for CPO. If it identifies gaps, create tasks for the assignees. **A report that creates work for others but doesn't spawn tasks is an incomplete deliverable.** Pass all created card IDs in `created_cards` on `kanban_complete`.
+- **Assume paid-tier pricing applies to free-tier operations.** WhatsApp messages within the 24-hour session window cost R0 — don't cargo-cult the paid transaction cost model (Paystack fees, watermarking, multi-step notifications) when estimating the cost of free-resource downloads. Verify which pricing tier and message path applies before quoting a per-operation cost.
 
 ## Pitfalls
 
@@ -1202,3 +1219,10 @@ python3 ~/.hermes/skills/devops/kanban-worker/scripts/scan-blocked-tasks.py --fo
 ```
 
 The script handles all three event kinds (`gave_up`, `crashed`, `protocol_violation`), extracts block reasons from both the task record and event log, and applies the correct routing/triage recommendation per the Board Health Scan procedure above.
+
+## Reference Files
+
+- `references/audit-action-closure.md` — Pattern for creating follow-up tasks from audit/report findings instead of just documenting gaps
+- `references/marketplace-coldstart-content-seeding.md` — Strategy for seeding a marketplace with free open-licensed content to solve the cold-start problem
+- `references/scratch-gc-data-loss-rescue-2026-05-15.md` — Worked example of rescuing 80 agent-produced docs from scratch workspaces
+- `references/content-sourcing-free-caps-resources.md` — Research on free CAPS-aligned SA teaching resources for marketplace seeding
