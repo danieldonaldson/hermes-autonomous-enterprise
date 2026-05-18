@@ -1,16 +1,16 @@
 # Product Leak Detection — Technical Notes
 
-## grep -E compatibility: `\d` does NOT work
+## grep -E compatibility: `\\d` does NOT work
 
-**Critical pitfall:** `grep -E` (extended regex) does NOT support PCRE shorthand classes like `\d` for digits. In `grep -E`, `\d` matches a literal backslash-d or just literal 'd' depending on the shell quoting. This causes massive false positives — `R\d+` matches ANY word containing "Rd" (onboa**Rd**ing, coo**Rd**ination).
+**Critical pitfall:** `grep -E` (extended regex) does NOT support PCRE shorthand classes like `\\d` for digits. In `grep -E`, `\\d` matches a literal backslash-d or just literal 'd' depending on the shell quoting. This causes massive false positives — `$\\d+` matches ANY occurrence of "$d" in shell scripts, config files, or code.
 
 **Fix:** Use `[0-9]` instead:
 ```bash
-# WRONG — matches "onboarding", "coordination", etc.
-grep -rIn -E "R\d+" framework/
+# WRONG — matches "$d" patterns everywhere (shell variables, config values)
+grep -rIn -E "$\\d+" framework/
 
-# RIGHT — only matches R followed by digits
-grep -rIn -E "R[0-9]+" framework/
+# RIGHT — only matches $ followed by digits
+grep -rIn -E "$[0-9]+" framework/
 ```
 
 ## PRODUCT_BLOCKLIST format
@@ -18,27 +18,27 @@ grep -rIn -E "R[0-9]+" framework/
 In `env.sh`, define as pipe-separated grep -E patterns:
 
 ```bash
-export PRODUCT_BLOCKLIST="CompanyName|domain\.com|FounderName|PaymentProvider|R[0-9]+[0-9]*[kKmM]|\\$0\.0226|market-specific-term"
+export PRODUCT_BLOCKLIST="CompanyName|domain\\.com|FounderName|PaymentProvider|$[0-9]+[0-9]*[kKmM]|\\\\$0\\.0226|market-specific-term"
 ```
 
 **Escaping rules for bash strings:**
-- `.` → `\.` (match literal dot, not any char)
-- `$` → `\\$` (double-escape: bash consumes one, grep gets `\$`)
+- `.` → `\\.` (match literal dot, not any char)
+- `$` → `\\\\$` (double-escape: bash consumes one, grep gets `\\$`)
 - `[0-9]` → works as-is in grep -E
-- Spaces in terms are fine (e.g. `SA teacher` matches the exact phrase)
+- Spaces in terms are fine (e.g. `platform user` matches the exact phrase)
 
 **What to include (unique identifiers):**
 - Company name, domain, founder name
-- Payment provider names (Paystack, Stripe)
-- Currency amounts with specific values (R[0-9]+, $0.0226)
+- Payment provider names (Stripe)
+- Currency amounts with specific values ($[0-9]+, $0.0226)
 - Market-specific jargon that uniquely identifies the product
 - Overlay repo name if it contains the company name
 
 **What NOT to include (too broad → false positives):**
-- Generic platform names appearing in docs (WhatsApp, Discord — hermes-agent lists supported platforms)
+- Generic platform names appearing in docs (messaging, Discord — hermes-agent lists supported platforms)
 - Timezone abbreviations used by many setups (SAST, UTC, EST)
 - Generic business terms (bulk licensing, onboarding)
-- Acronyms that appear in common words (CAPS → matches "CAPSlock")
+- Acronyms that appear in common words (standards → matches "standardize", "nonstandard")
 
 ## The leak scan in git-health-check.sh
 
@@ -48,10 +48,10 @@ The scan uses `grep -rIn -i -E "$SEARCH_TERMS"` across `framework/roles/`, `fram
 
 ```bash
 # Source the blocklist
-source ~/Work/hermes-yethu-overlay/scripts/env.sh
+source ~/Work/acme-corp-overlay/scripts/env.sh
 
 # Test with a deliberate leak
-echo "# test leak: Yethu marketplace" > /tmp/test_leak.md
+echo "# test leak: AcmeCorp platform" > /tmp/test_leak.md
 cd ~/Work/hermes-autonomous-enterprise
 grep -rIn -i -E "$PRODUCT_BLOCKLIST" /tmp/test_leak.md
 # Should match

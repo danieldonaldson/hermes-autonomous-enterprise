@@ -381,7 +381,7 @@ A BHAG (Big Hairy Audacious Goal) drives top-down KPI target-setting. Instead of
 
 ### The Process
 
-1. **CEO sets the BHAG** — e.g. "R1M ARR by Year 3" (a single, audacious, time-bound revenue/impact goal)
+1. **CEO sets the BHAG** — e.g. "$1M ARR by Year 3" (a single, audacious, time-bound revenue/impact goal)
 2. **Each role back-calculates** what their metrics need to be to support the BHAG:
    - **Finance** — "What MRR/transaction volume does the BHAG require? What commission rate? What break-even MAU?"
    - **Growth** — "What MAU, DAU/MAU ratio, conversion rates, churn limits, and acquisition velocity does that transaction volume need?"
@@ -407,7 +407,7 @@ My KPI chain from BHAG down:
   ...
   
 Assumptions:
-  - <assumption 1> (e.g. ATV = R150)
+  - <assumption 1> (e.g. ATV = $150)
   - <assumption 2> (e.g. commission = 20%)
   
 Sensitivity:
@@ -461,5 +461,5 @@ Different roles will produce different numbers from the same BHAG because they m
 
 - **Top-line BHAG without bottom-up validation** — check that the BHAG is physically possible given market size (e.g. "22K MAU in a 30K-person market" is a red flag)
 - **Single-role back-calculation** — if only Finance does the math, you miss the constraints that Product, Growth, and Engineering bring
-- **Static targets** — a BHAG trajectory needs sensitivity analysis (what if ATV is R100 not R150? what if churn is 8% not 5%?)
+- **Static targets** — a BHAG trajectory needs sensitivity analysis (what if ATV is $100 not $150? what if churn is 8% not 5%?)
 - **Forgetting to cascade** — once BHAG-driven targets are set, update the KPI framework and role SOUL.md milestone sections"

@@ -290,7 +290,7 @@ confirmed_decisions:
 tech_stack:
   backend: Rust + Axum
   frontend: TypeScript + Svelte
-  payments: Paystack
+  payments: Stripe
   # ...
 
 codebase_paths:
@@ -315,7 +315,7 @@ Before releasing a framework repo publicly, audit every SOUL.md for product-spec
 
 ### Pass 1: Broad grep for obvious leaks
 
-Search for: company/product names, founder names, trademarks, domain names, registered addresses, currency symbols with amounts (R20, $0.0226).
+Search for: company/product names, founder names, trademarks, domain names, registered addresses, currency symbols with amounts ($20, $0.0226).
 
 ```bash
 grep -rn 'company-name\|founder-name\|product-name' framework/roles/ --include='*.md' --include='*.yaml'
@@ -326,7 +326,7 @@ grep -rn 'company-name\|founder-name\|product-name' framework/roles/ --include='
 Every framework inevitably reflects the project it was built for. Search for terms specific to your product's domain and extract them to the overlay:
 
 ```bash
-# Examples from a teacher marketplace cleanup:
+# Examples from a SaaS marketplace cleanup:
 grep -rn 'teacher\|school\|curriculum\|worksheets\|telco\|publisher\|CAPS' framework/roles/ --include='*.md'
 ```
 
@@ -339,7 +339,7 @@ Each match is either:
 Check for hardcoded language names, frameworks, or services that belong in the overlay:
 
 ```bash
-grep -rn 'Rust\|Python\|Go\|React\|PostgreSQL\|SQLx\|Axum\|Stripe\|Paystack\|Meta Cloud\|WhatsApp\|cargo\|npm\|yarn' framework/roles/ --include='*.md'
+grep -rn 'Rust\|Python\|Go\|React\|PostgreSQL\|SQLx\|Axum\|Stripe\|Meta Cloud\|WhatsApp\|cargo\|npm\|yarn' framework/roles/ --include='*.md'
 ```
 
 Technical roles (Engineer, Tech Lead, CTO) are the most common offenders. Replace with `See product-context.yaml > tech_stack` references.
@@ -414,7 +414,7 @@ An open-source framework repo should make its structure immediately accessible:
 
    These are symlinks whose target doesn't exist. Each needs investigation — either the framework role was renamed/removed, or the profile name was customized and needs real files.
 
-2. **Putting product data in the SOUL.md.** If the SOUL.md mentions your company name, tech stack, or founder — that's product data leaking into the structure. Move it to `product-context.yaml`. A systematic audit (see "Auditing SOUL.md for Product Leaks" above) catches all of these before release. Common oversight: founder name in escalation-to notes ("Present the memo to Daniel via Telegram"), market context in CMO/CPO role descriptions, hardcoded tech stacks in Engineer/CTO SOUL.md files, and document-format assumptions (PDF, watermarking) that don't apply to all products.
+2. **Putting product data in the SOUL.md.** If the SOUL.md mentions your company name, tech stack, or founder — that's product data leaking into the structure. Move it to `product-context.yaml`. A systematic audit (see "Auditing SOUL.md for Product Leaks" above) catches all of these before release. Common oversight: founder name in escalation-to notes ("Present the memo to the founder via Telegram"), market context in CMO/CPO role descriptions, hardcoded tech stacks in Engineer/CTO SOUL.md files, and document-format assumptions (PDF, watermarking) that don't apply to all products.
 
 3. **Forgetting the `## Product Context` section.** Without it, the agent doesn't know to look for product info. Every structural SOUL.md needs this at the top.
 

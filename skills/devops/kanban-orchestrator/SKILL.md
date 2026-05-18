@@ -89,10 +89,10 @@ When creating a task that will produce a durable artifact (blog post, design doc
 
 ```python
 t1 = kanban_create(
-    title="[CM] Draft teacher community seed messages for CMO approval",
+    title="[CM] Draft community seed messages for CMO approval",
     assignee="community-manager",
-    body="Draft 5 sample seed messages for teacher outreach...\n"
-         "output_path: ~/Work/hermes-yethu-overlay/docs/product/seed-messages.md",
+    body="Draft 5 sample seed messages for user outreach...\n"
+         "output_path: $OVERLAY_ROOT/docs/product/seed-messages.md",
 )["task_id"]
 ```
 

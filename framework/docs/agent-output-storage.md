@@ -11,11 +11,11 @@ Scratch workspaces (`$HERMES_KANBAN_WORKSPACE`) are garbage-collected when the t
 Every kanban task that produces a document/artifact should include an `output_path` field in its body. Example:
 
 ```
-## Task: Draft teacher community seed messages
+## Task: Draft community seed messages
 Owner: Community Manager | KPI: G8
 output_path: docs/operations/seed-messages.md
 
-Draft 5 sample seed messages for teacher outreach: value prop, launch hook, CTA.
+Draft 5 sample seed messages for user outreach: value prop, launch hook, CTA.
 CMO reviews before sending.
 ```
 
@@ -26,7 +26,7 @@ The orchestrator (CMO, CPO, Tech Lead, etc.) is responsible for including `outpu
 When a worker sees `output_path` in the task body, they must:
 
 1. Write the final output file to the path, resolved relative to the overlay root (declared in `product-context.yaml` under `codebase_paths.overlay_root`)
-2. If the path is absolute (like `~/Work/hermes-yethu-overlay/docs/...`), use it directly
+2. If the path is absolute (like `$OVERLAY_ROOT/docs/...`), use it directly
 3. If relative (like `docs/product/launch-blog-post.md`), resolve against the overlay root
 
 ### 3. Workers commit the output
@@ -34,7 +34,7 @@ When a worker sees `output_path` in the task body, they must:
 After writing the file, the worker must commit it to the overlay repo:
 
 ```bash
-cd ~/Work/hermes-yethu-overlay
+cd $OVERLAY_ROOT
 git add -A
 git commit -m "docs: add <task-title>
 Produced by <role> — <short summary>"
@@ -48,7 +48,7 @@ Include the output path in your `kanban_complete` summary so it's discoverable f
 
 ```python
 kanban_complete(
-    summary="Drafted 5 seed messages for teacher outreach — committed to overlay",
+    summary="Drafted 5 seed messages for user outreach — committed to overlay",
     metadata={
         "output_path": "docs/operations/seed-messages.md",
         "word_count": 450,
@@ -92,4 +92,4 @@ The orchestrator creating the task should choose the right subdirectory. When in
 
 - **Code changes** (Rust source, SQL migrations, frontend code) go to the codebase (`codebase_paths.project_root` in `product-context.yaml`), not to the overlay docs/
 - **Scratch-only work** (one-off calculations, temporary experiments) can stay in the scratch workspace — just don't block or complete without noting it
-- **Existing docs** in the product repo (`~/Work/yethu/docs/`) stay where they are — this convention applies to new outputs going forward
+- **Existing docs** in the product repo (`~/Work/<your-product>/docs/`) stay where they are — this convention applies to new outputs going forward

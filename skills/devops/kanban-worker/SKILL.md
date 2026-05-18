@@ -1,7 +1,7 @@
 ---
 name: kanban-worker
 description: Pitfalls, examples, and edge cases for Hermes Kanban workers. The lifecycle itself is auto-injected into every worker's system prompt as KANBAN_GUIDANCE (from agent/prompt_builder.py); this skill is what you load when you want deeper detail on specific scenarios.
-version: 2.6.0
+version: 2.10.0
 platforms: [linux, macos, windows]
 metadata:
   hermes:
@@ -52,23 +52,23 @@ When your task produces **durable artifacts** — docs, reports, designs, config
 1. Create the file in your scratch workspace. Use the scratch directory for intermediate files.
 2. Copy the final artifact to `docs/founder-review/<topic>.md` in the overlay repo:
    ```bash
-   cp <scratch-file> ~/Work/hermes-yethu-overlay/docs/founder-review/<topic>.md
+   cp <scratch-file> $OVERLAY_ROOT/docs/founder-review/<topic>.md
    ```
 3. **VERIFY the file exists at the target path.** Run this before completing:
    ```bash
-   ls -la ~/Work/hermes-yethu-overlay/docs/founder-review/<topic>.md
+   ls -la $OVERLAY_ROOT/docs/founder-review/<topic>.md
    ```
    The file must show up in `ls` output as a real file (not empty, not "No such file or directory"). If it doesn't, you wrote to the wrong path — copy it again to the correct overlay path. Do NOT trust your own claim that you wrote it; the `ls` output is the ground truth.
 4. Mention the artifact path in your `kanban_complete` summary so the founder knows what to review and the promotion agent knows where the file lives.
 
-**Do NOT git commit.** Writing the file to the persistent overlay filesystem (`~/Work/hermes-yethu-overlay/`) is sufficient to prevent GC. Git commits are managed by the founder when approving files for promotion. Files in `docs/founder-review/` are working documents, not canonical company docs.
+**Do NOT git commit.** Writing the file to the persistent overlay filesystem (`$OVERLAY_ROOT/`) is sufficient to prevent GC. Git commits are managed by the founder when approving files for promotion. Files in `docs/founder-review/` are working documents, not canonical company docs.
 
 **How to promote (after founder approval).** Once the founder signs off on a file in `docs/founder-review/`:
 
 1. Move it to its permanent destination (see destination table above)
 2. Commit with a promotion message:
    ```bash
-   cd ~/Work/hermes-yethu-overlay
+   cd $OVERLAY_ROOT
    git mv docs/founder-review/<topic>.md docs/<category>/<topic>.md
    git commit -m "promote: <topic> approved and moved to docs/<category>/"
    git push
@@ -78,12 +78,17 @@ When your task produces **durable artifacts** — docs, reports, designs, config
 **Pitfalls.**
 
 - **Scratch-only output = data loss.** If you write output files only to `$HERMES_KANBAN_WORKSPACE`, they vanish when the task is archived. Always copy durable artifacts to the overlay path.
-- **Don't hallucinate file writes.** Claiming "written to ~/Work/hermes-yethu-overlay/docs/" in your summary without actually writing the file to that path is data loss — the next run has no idea the file was supposed to exist. This is the #1 cause of lost agent artifacts. If you only created the file inside the scratch workspace (which gets GC'd when the task is archived) or hallucinated the write entirely, it's gone when your process exits. **Verify on every document-producing task:** run `ls -la` on the overlay path to confirm the file exists on the persistent filesystem — do NOT trust your own claim that you wrote it.
+- **Don't hallucinate file writes.** Claiming "written to $OVERLAY_ROOT/docs/" in your summary without actually writing the file to that path is data loss — the next run has no idea the file was supposed to exist. This is the #1 cause of lost agent artifacts. If you only created the file inside the scratch workspace (which gets GC'd when the task is archived) or hallucinated the write entirely, it's gone when your process exits. **Verify on every document-producing task:** run `ls -la` on the overlay path to confirm the file exists on the persistent filesystem — do NOT trust your own claim that you wrote it.
 - **No `output_path` in task body.** If the task body doesn't specify one, write to `docs/founder-review/` and mention it in your handoff summary so the orchestrator adds it to future task bodies.
-- **Overlay repo not found.** If `~/Work/hermes-yethu-overlay/` doesn't exist, check the task body for an alternative overlay path. If none exists, write to scratch and block with `help-needed: output path not found — need to configure overlay repo for persistent storage`.
+- **Overlay repo not found.** If `$OVERLAY_ROOT/` doesn't exist, check the task body for an alternative overlay path. If none exists, write to scratch and block with `help-needed: output path not found — need to configure overlay repo for persistent storage`.
 - **Git conflicts.** If the overlay has uncommitted changes from other agents, just `git add` your file — don't touch unrelated files. If a merge conflict occurs, block with `help-needed: git conflict in overlay — needs human resolution`.
 - **Don't modify other agents' files.** Only write to your designated output path. The overlay docs tree is shared across all agents — treat it like a collaborative wiki, not your private workspace.
 - **Writing outside `$HERMES_KANBAN_WORKSPACE` is allowed for output artifacts.** The scratch restriction applies to intermediate files, not to the final delivery.
+
+- **Don't invent business terms.** Agents routinely produce detailed pricing tables, partnership royalty splits, subscription tier lists, and school plans that look plausible but the founder never decided. If the task body or existing company docs don't specify a price, plan, or commitment, use `[TBD — awaiting founder decision]` as a placeholder. Never invent pricing ($1,500/yr subscription tiers, $2,400 packages, etc.), partnership revenue splits (80/20 reseller margins, etc.), or legal terms (indemnity clauses, termination fees, etc.) — especially when those numbers appear in a document destined for founder review. The document should flag what's missing, not fill in plausible-sounding figures that mislead the founder into thinking a decision was made.
+- **Conflict-of-interest flagging.** If a document names an organization the founder is affiliated with (e.g. a school or company), the document must contain a visible conflict note rather than treating it as a normal partnership target. Add a `[CONFLICT: founder works at this org — decision needed]` callout in the document and flag it in the `kanban_complete` summary so the founder sees it before promotion.
+
+**How to present for founder review.** When the founder sits down to review documents from `docs/founder-review/`, read the actual file content — not just a summary or abstract. The founder needs to see the full text (pricing claims, partner names, proposed commitments) to decide whether to promote. Present the content file-by-file and ask for a decision on each: **promote** (move to permanent category), **rework** (edit and resubmit), or **skip** (don't need it). Batch decisions when clear patterns emerge.
 
 ## Tenant isolation
 
@@ -337,7 +342,7 @@ The block message is what appears in the dashboard / gateway notifier. The comme
 When the task is blocked on a **human action** (not a decision), offer 2-3 specific, low-friction options with estimated effort so the human can pick the fastest path to unblock:
 
 ```python
-kanban_block(reason="Need 1 small human action to unblock 2 interviews: Option A (2 min) — WhatsApp-forward recruitment message to 2 SA teachers. Option B (1 min) — share 2 Telegram handles. Option C (5 min) — post in 1 Facebook group.")
+kanban_block(reason="Need 1 small human action to unblock 2 interviews: Option A (2 min) — WhatsApp-forward recruitment message to 2 users. Option B (1 min) — share 2 Telegram handles. Option C (5 min) — post in 1 Facebook group.")
 ```
 
 Three rules:
@@ -412,7 +417,8 @@ If you open the task and `kanban_show` returns `runs: [...]` with one or more cl
 - Create follow-up tasks assigned to yourself — assign to the right specialist.
 - Complete a task you didn't actually finish. Block it instead.
 - Complete a task whose writeup or recommendations create work for other roles, without spawning kanban tasks for them. If your report proposes a budget, create a task for Finance. If it proposes a feature change, create a task for CPO. If it identifies gaps, create tasks for the assignees. **A report that creates work for others but doesn't spawn tasks is an incomplete deliverable.** Pass all created card IDs in `created_cards` on `kanban_complete`.
-- **Assume paid-tier pricing applies to free-tier operations.** WhatsApp messages within the 24-hour session window cost R0 — don't cargo-cult the paid transaction cost model (Paystack fees, watermarking, multi-step notifications) when estimating the cost of free-resource downloads. Verify which pricing tier and message path applies before quoting a per-operation cost.
+- **Invent pricing, packaging, or financial terms without consulting the team.** Never invent pricing figures, school tiers, subscription packages, partnership terms, or any financial figure in a deliverable. If you don't have confirmed numbers from the founder, Finance, or an ADR, mark them as `[TBD — pricing to be confirmed with founder/Finance]` and create a task to get it resolved. Invented pricing that gets baked into a proposal creates rework for the whole team when the founder sees it for the first time in a review.
+- **Assume paid-tier pricing applies to free-tier operations.** WhatsApp messages within the 24-hour session window cost $0 — don't cargo-cult the paid transaction cost model (payment gateway fees, watermarking, multi-step notifications) when estimating the cost of free-resource downloads. Verify which pricing tier and message path applies before quoting a per-operation cost.
 
 ## Pitfalls
 
@@ -508,7 +514,7 @@ Before fixing the provider and reclaiming, check whether any of the tasks in a C
 
 1. **Extract the expected output path from the task body.** Read the first 20-30 lines with `kanban_show`. Task bodies often specify output paths (e.g. "Save to: `docs/design/X.md`", "Output: X.yaml"). Parse one or two key output paths per task.
 
-2. **Verify with `search_files` or `find`.** Check if those paths exist on disk. For scratch-workspace tasks that write to a permanent directory (e.g. `~/Work/yethu/docs/`), the file will exist even though the workspace temp dir is gone.
+2. **Verify with `search_files` or `find`.** Check if those paths exist on disk. For scratch-workspace tasks that write to a permanent directory (e.g. `~/Work/<your-product>/docs/`), the file will exist even though the workspace temp dir is gone.
 
 3. **Sample a representative subset first.** For a bulk cascade (30+ tasks across different profiles), check 3-5 to gauge the pattern:
    - **All 3-5 have output** → likely most tasks completed work. Bulk-`kanban_complete` the ones with verified output; reclaim the rest.
@@ -648,6 +654,45 @@ hermes kanban create "My task" \
 `--max-retries` accepts seconds (3600), durations (60m, 2h), or any reasonable time string. `--max-retries` overrides the dispatcher's `kanban.failure_limit` (default 2) and allows more retries before gave_up.
 
 This is why a retry death spiral (unblock → timeout → gave_up) can happen even after bumping the profile's `gateway_timeout`. Always check both settings. If you're diagnosing a death spiral and see identical `limit_seconds` across all runs, the per-task `--max-runtime` is the culprit, not the profile config.
+
+**Archived tasks masquerading as blocked during mass unblock.** When the user says "unblock all blocked tasks" and you call `kanban unblock <id>` on a batch, some tasks may respond (truly blocked) while others silently fail (return code 0 but no "Unblocked" message). The silent failures are likely **archived** tasks — tasks that hit max-retries and entered a terminal state. These appear in `kanban list --status blocked` output alongside truly blocked tasks but cannot be unblocked because they aren't in a blocked state — they're in an archived (terminal) state that the `--status blocked` filter also includes.
+
+Diagnosis: call `kanban show <id>` for the failed tasks. If `status: archived` appears, the task is terminal and `kanban unblock` will never work on it.
+
+Recovery procedure for archived tasks:
+
+1. **Check if `kanban complete` works.** Some archived tasks accept completion; others reject it with `"unknown id or terminal state"`. Try one:
+   ```bash
+   hermes kanban complete t_archived --summary "Archived — recreating with correct max-runtime"
+   ```
+   If it succeeds, the task is cleaned up. If it fails with "terminal state", leave it — it's truly dead.
+
+2. **Create fresh replacements** with the correct `--max-runtime` matching the profile's `gateway_timeout` to prevent the same timeout death spiral:
+   ```bash
+   hermes kanban create "Engineer: test task" \
+     --assignee engineer \
+     --parent t_parent_id \
+     --max-runtime 3600 \
+     --max-retries 3
+   ```
+
+3. **Link the fresh task** if the original had a parent:
+   ```bash
+   hermes kanban link t_fresh_id t_parent_id
+   ```
+
+4. **Block the fresh task** if it depends on another being finished first (not the parent — a runtime/ordering dependency):
+   ```bash
+   hermes kanban block t_fresh_id "depends-on: prerequisite task first"
+   ```
+
+What NOT to do:
+- **Do NOT keep retrying `kanban unblock` on archived tasks** — it fails silently each time and wastes cycles
+- **Do NOT use `kanban edit` to change status** — `edit` only works on completed tasks for backfilling results, not on archived tasks
+- **Do NOT complete the archived task if it rejects completion** — leave it dead and move on
+- **Do NOT leave the archived task's parent incomplete** — if the archived task was the last child of a parent that needs to complete, make sure the fresh replacement is linked so the parent can progress
+
+For fresh replacements, always set `--max-runtime` explicitly. The default 900s (15 min) is almost always too short for Rust compilation, test suites, or multi-step agent workflows. Match it to the profile's `gateway_timeout` (typically 3600s).
 
 **Unblock without root cause fix — the retry death spiral.** When a gave_up task is unblocked (manually or by a router) without fixing the root cause that killed it (timeout too short, provider drop, missing credential), the worker respawns and fails with the identical error. This creates a retry death spiral: unblock → spawn → timeout → gave_up → unblock → spawn → timeout → gave_up ... ad infinitum. Telltale signs on `kanban_show`:
 - Multiple `gave_up` events interleaved with `unblocked` events
@@ -789,6 +834,20 @@ When you are a monitoring agent (CoS, PMO Board Monitor, or similar) scanning th
 | 1 | Monitor | Report in your output. Do NOT unblock — the dispatcher's retry mechanism handles first failures. Note the failure reason for trend spotting. |
 | 2 | Yellow | Inspect the runs: are all failures identical? If yes → do NOT unblock, flag the root cause pattern. Create an escalation task if the failure seems chronic. |
 | 3+ | Red | **Escalate to founder.** Create a kanban task assigned to the founder/human operator with the failure history, suspected root cause, and recommended fix (e.g. "increase gateway_timeout on engineer profile to 3600s" or "switch provider from MiniMax to DeepSeek"). Do NOT keep unblocking — that creates the retry death spiral (see Pitfalls). |
+
+### Staleness — when a gave_up task rots
+
+The gave_up count is not the only signal. A single gave_up task that sits unchanged for **multiple hours** is in practice more urgent than a give_up count suggests. The gave_up event itself is a "run died" signal; the passage of time without resolution is a "root cause hasn't been addressed" signal. Use time as an amplifier:
+
+| Time since last gave_up | Amplify by |
+|---|---|
+| < 1 hour | No amplification — dispatcher may retry |
+| 1–4 hours | Surface prominently in your report as a stale gave_up |
+| 4+ hours | Treat as Yellow (equivalent to gave_up count = 2), create escalation task |
+
+Apply time amplification even when the gave_up count is 1. A task that gave_up once 6 hours ago and has zero human activity on it since then should not be silently monitored — it's rotting. The practical rule: **if you've seen the same task in the same state for 3 consecutive review cycles (15 minutes) with no new events, surface it; if you've seen it for 4+ hours through any number of cycles, escalate.**
+
+Example from this session: `t_28363a61` gave_up once at 19:36 with tech-lead's run crash. By 07:10 the next morning (~11.5 hours), no review router had escalated it because the gave_up count was only 1. The time dimension would have caught this: 4+ hours stale → treat as Yellow → create escalation task.
 
 ### What to include in an escalation task
 
@@ -972,6 +1031,24 @@ This indicates a stuck worker may exist — check the Stuck Workers section abov
 **Pattern 4 — clean log with API successes but task still blocked:**
 If the log shows successful API calls with `kanban_*` tool completions, the task may have an internal bug unrelated to provider health. This is rare in cascades but possible for isolated failures.
 
+**Pattern 5 — HTTP 402 Insufficient Balance (provider credits exhausted):**
+```
+ERROR ... API call failed after 3 retries. HTTP 402: Insufficient Balance | provider=deepseek model=deepseek-v4-flash
+ERROR cron.scheduler: Job '...' failed: RuntimeError: HTTP 402: Insufficient Balance
+```
+Unlike Patterns 1-4 (which affect kanban workers), **Pattern 5 primarily hits agent-based monitoring crons** — the Chief of Staff, PMO, COO, CEO, and Review Router are the ones that fail here. Kanban workers may or may not be affected depending on whether their profile uses the same API key. The distinguishing signal: **no-agent script crons** (dispatcher watchdog, git health, kanban GC) continue to report `ok` because they consume zero LLM credits. This masking effect means the board appears healthy to infrastructure-level monitoring while all LLM-dependent oversight is dead.
+
+For complete diagnosis, see `references/provider-402-credit-exhaustion.md` in this skill. Key diagnostic sequence:
+```bash
+# 1. Check which crons failed vs succeeded
+hermes cron list 2>&1 | grep -E 'error:|ok'
+
+# 2. Confirm 402 in agent log
+grep 'Insufficient Balance' ~/.hermes/logs/agent.log | tail -3
+
+# 3. If agent-based crons all failed but script crons all ok → credits exhausted
+```
+
 **Confirm it's a cascade (not Cause A):**
 
 ```bash
@@ -1060,7 +1137,51 @@ grep 'API call #[0-9]' ~/.hermes/profiles/<profile>/logs/agent.log | tail -1 | g
 
 If the gap between "now" and the last API call exceeds the profile's `gateway_timeout`, the worker is likely stuck.
 
-### Step 6: Check ready tasks for viability
+### Step 6: Check `todo` tasks for parent-blocking (silent stalls)
+
+Tasks in `todo` status that depend on a blocked parent are silently stalled — they don't appear as "ready" or "blocked" on the board, so standard scans miss them. A parent with a stale block reason (not a real human gate) can trap an entire subtree in `todo`.
+
+Check for this pattern:
+
+```python
+result = terminal("hermes kanban list 2>&1")
+todo_lines = [l.strip() for l in result["output"].split("\n") if l.strip() and l.startswith("◻")]
+
+for line in todo_lines:
+    parts = line.split()
+    if len(parts) < 4:
+        continue
+    task_id = parts[1]
+    assignee = parts[3]
+    title = " ".join(parts[4:])
+
+    # Check if the task has parents
+    show = terminal(f"hermes kanban show {task_id} 2>&1 | grep 'parents:'")
+    parents_line = show.get("output", "").strip()
+    if not parents_line:
+        continue  # no parents — can't be parent-blocked
+
+    # Parse parent IDs
+    parent_ids = [p.strip() for p in parents_line.split("parents:")[1].strip().split(",")]
+    for pid in parent_ids:
+        pstatus = terminal(f"hermes kanban show {pid} 2>&1 | grep 'status:'")
+        status = pstatus.get("output", "").strip().split(":")[-1].strip()
+        if status == "blocked":
+            # This parent is blocking the child. Check if the block reason is stale.
+            preason = terminal(f"hermes kanban show {pid} 2>&1 | grep -A 2 'status:.*blocked'")
+            print(f"TODO PARENT-BLOCKED: {task_id} ({assignee}): {title[:60]}")
+            print(f"  → Stuck behind parent {pid} (status=blocked)")
+            print(f"  → Parent block context: {preason.get('output','')[:120]}")
+```
+
+Stale block signals to look for:
+- `[ALREADY UNBLOCKED]` — the Tech Lead re-blocked by accident after the task was already unblocked
+- `[ALREADY REVIEWED]` or similar meta-reasons — not a real decision gate
+- Any block reason that references the task's own past events rather than an external dependency or pending decision
+
+If a stale-blocked parent is found, the COO can unblock it directly (it's a board hygiene fix, not a decision gate). After unblocking, `todo` children promote to `ready` on the next triage cycle.
+
+### Step 7: Check ready tasks for viability
 
 Tasks in `ready` status will be dispatched next. If the board is in a bulk cascade failure (Step 3 confirmed Cause B), these tasks will also fail immediately upon dispatch. Note them in the report so the operator can hold dispatch or fix first:
 
@@ -1075,7 +1196,9 @@ for line in result["output"].strip().split("\n"):
         print(f"READY (will fail if dispatched in current state): {task_id} ({assignee}): {title}")
 ```
 
-**CRITICAL: Verify the assigned profile exists.** A ready task assigned to a non-existent profile will never be claimed. Check against `hermes profile list`:
+#### Substep 7a: Verify the assigned profile exists
+
+A ready task assigned to a non-existent profile will never be claimed. Check against `hermes profile list`:
 
 ```bash
 # Get all valid profile names
@@ -1094,9 +1217,151 @@ Do NOT just report orphaned ready tasks — fix them on the spot. Common mismatc
 
 After reassigning, the dispatcher picks them up on the next cycle.
 
+#### Substep 7b: Flag unassigned ready tasks
+
+Tasks with no assignee (`assignee: -` or shown as `(unassigned)` in `kanban list` output) will never be dispatched — the dispatcher has no profile to route to. These are **dead tasks** unless assigned:
+
+```python
+result = terminal("hermes kanban list 2>&1")
+for line in result["output"].strip().split("\n"):
+    parts = line.strip().split()
+    if len(parts) >= 4 and parts[0] == "▶" and ("(unassigned)" in line or parts[3] == "-"):
+        task_id = parts[1]
+        title = " ".join(parts[4:])
+        print(f"UNASSIGNED READY: {task_id}: {title[:80]}")
+```
+
+Diagnose the root cause: why was this task created without an assignee?
+
+- **Common cause A** — Spawned by a decomposition that set `assignee` to a parent override (e.g. the task body has `assignee` in the YAML but it wasn't picked up by `kanban_create`). Fix: `hermes kanban reassign <task_id> <correct_profile>`.
+- **Common cause B** — Created manually by a user or an earlier agent without `--assignee`. Fix: same as above.
+- **Common cause C** — Duplicate of an already-completed task (see Substep 7c below). Fix: archive the duplicate.
+
+#### Substep 7c: Detect duplicate ready tasks (board hygiene)
+
+Ready tasks may be **duplicates** of already-completed tasks — same title, same objective, but created as a second set of child tasks under an already-done parent. These clutter the board and waste dispatch cycles if ever assigned.
+
+Detection procedure:
+
+```python
+result = terminal("hermes kanban list 2>&1")
+ready_tasks = []
+done_tasks = []
+
+for line in result["output"].strip().split("\n"):
+    parts = line.strip().split()
+    if len(parts) < 5:
+        continue
+    symbol = parts[0]
+    task_id = parts[1]
+    title = " ".join(parts[4:])  # skip symbol, id, status, assignee
+    if symbol == "▶":
+        ready_tasks.append({"id": task_id, "title": title})
+    elif symbol == "✓":
+        done_tasks.append({"id": task_id, "title": title})
+
+# Cross-reference ready task titles against done task titles
+for rt in ready_tasks:
+    # Normalize: strip leading 'Engineer: ', trailing parentheticals, whitespace
+    rt_normalized = rt["title"].strip().rstrip(".")
+    for dt in done_tasks:
+        dt_normalized = dt["title"].strip().rstrip(".")
+        if rt_normalized == dt_normalized:
+            print(f"DUPLICATE READY: {rt['id']} matches done task {dt['id']}: {rt['title'][:80]}")
+```
+
+This catches the pattern where a parent task's decomposition created child tasks after the original child tasks had already been completed under the same parent. The telltale sign: ready tasks with *identical titles* to done tasks, all children of the *same completed parent*.
+
+**Verification:** Cross-reference the parent. If the ready task's parent is already `done` AND a done task with the same title exists under the same parent, it's a confirmed duplicate:
+
+```bash
+# Check the ready task's parent
+hermes kanban show <ready_task_id> | grep 'parents:'
+# Check the done task with the same title
+hermes kanban show <done_task_id> | grep 'parents:'
+# If both share the same (done) parent → duplicate
+```
+
+**Root cause:** This typically happens when a decomposition agent or human operator re-runs a decomposition for an already-completed parent task, creating a second batch of child tasks that mirror the first. The new tasks are created in `ready` status with no assignee because the original worker profile that would claim them is already done.
+
+**Fix — archive the duplicate ready tasks:**
+```bash
+for tid in t_ready_1 t_ready_2 t_ready_3; do
+    hermes kanban complete "$tid" --summary "Duplicate of already-completed task under same parent. Archived."
+done
+```
+
+Do NOT reassign or unblock duplicate ready tasks — that would re-dispatch work that's already been completed, causing double execution.
+
+For the full worked example (8 duplicate test tasks under a completed parent, all unassigned, matching 8 already-done tasks), see `references/ready-task-duplicate-detection.md`.
+
 For the full worked example (including session that found `audit` and `cfo` assigned to non-existent profiles), see `references/proactive-fixes-during-board-scan.md`.
 
-### Step 7: Produce the report
+### Step 8a: Check if monitoring agents themselves are failing
+
+Before cross-referencing with other monitoring agents' reports, check whether those agents have been **running at all**. An agent that failed to fire produces no report, which looks the same as "nothing to report" but is fundamentally different.
+
+```python
+from hermes_tools import terminal
+
+# Check cron job health — look for error statuses on agent-based crons
+result = terminal("hermes cron list 2>&1")
+for line in result["output"].split("\n"):
+    # Look for jobs whose last run showed an error
+    if "error:" in line or "Insufficient Balance" in line:
+        print(f"MONITORING AGENT DOWN: {line.strip()}")
+
+# Specifically check critical monitoring crons for errors
+monitor_jobs = ["Chief of Staff", "PMO Board Monitor", "COO", "CEO Daily", "Review Router"]
+for job_name in monitor_jobs:
+    check = terminal(f'hermes cron list 2>&1 | grep -A 3 "{job_name}" | grep "Last run"')
+    output = check.get("output", "").strip()
+    if output:
+        print(output)
+```
+
+**Critical diagnostic signals:**
+
+| Signal | Interpretation |
+|--------|---------------|
+| Multiple agent-based crons failed at similar timestamps | Shared resource exhausted — very likely provider credit balance (402) or rate limit (429) |
+| Agent-based crons failed but no-agent script crons succeeded | **HTTP 402 credit exhaustion confirmed.** Scripts use zero LLM credits, so they survive provider outages. This is the definitive mask signal. |
+| All crons (agent + script) failed | Infrastructure outage (network, disk, systemd) — different root cause |
+| Only one cron failed | Isolated issue — check that profile's config or API key |
+
+**If you detect monitoring agent failures, the core question to answer in your report:**
+- How long was the monitoring gap? (check the last successful run timestamps of each failed cron)
+- What might have been missed during the gap? (check the board state against the last known-good report)
+- Is a balance top-up needed? (if 402 pattern detected)
+
+See `references/provider-402-credit-exhaustion.md` for full worked example and recovery procedure.
+
+### Step 8b: Cross-reference with other monitoring agents
+
+Before producing the final report, check recent outputs from other monitoring agents to catch findings you might have missed. Plan files from earlier runs are stored at `~/.hermes/plans/`:
+
+```bash
+ls -lt ~/.hermes/plans/ | head -10
+```
+
+Check for contradictions or missed signals:
+- **Chief of Staff enterprise sync** — files matching `enterprise-sync-*.md`. Their board overview should match yours. If they flagged something you missed, add it.
+- **Previous COO review** — files matching `coo-review-*.md`. Did the previous review's recommendations get actioned? If not, re-flag them.
+- **PMO board monitor** — the PMO's last cron output. They scan more frequently (every 30 min) and may catch transient issues between your runs.
+
+Pattern for reading the most recent CoS sync:
+
+```python
+import glob, os
+plan_dir = os.path.expanduser("~/.hermes/plans")
+syncs = sorted(glob.glob(os.path.join(plan_dir, "enterprise-sync-*.md")), reverse=True)
+if syncs:
+    co_sync = terminal(f"tail -50 {syncs[0]}")
+```
+
+If CoS and your scan agree on findings, confidence is higher. If they disagree (e.g. CoS flagged a bulk cascade you didn't see), re-inspect before reporting.
+
+### Step 9: Produce the report
 
 Format findings in a structured report with these sections, in order:
 
@@ -1159,7 +1424,7 @@ for each blocked task:
         SKIP  # Note in report for CoS scan, do NOT touch
 
     if assignee == "tech-lead":
-        SKIP  # Already at the right person. Leave a comment noting it was pre-routed.
+        SKIP  # Already at the right person.
 
     if block_reason.startswith("review-required:") and assignee != "tech-lead":
         ROUTE  # Reassign to tech-lead, then unblock
@@ -1168,6 +1433,27 @@ for each blocked task:
     else:
         SKIP  # Unknown block reason — leave for CoS/monitoring agent
 ```
+
+### Comment deduplication for recurrent scans
+
+The Review Router runs every 5 minutes. Leaving a comment on the same task each cycle creates **comment spam** — identical messages that drown out real discussion in the thread. The conversation from this session shows this pattern: a task that was already routed to tech-lead accumulated 8+ hours of identical review-router comments because every 5-minute cycle left another "Already assigned to tech-lead" message.
+
+**Deduplication rule:** Before leaving a comment on a skipped/already-routed task, check the last comment by the review-router author. If the last review-router comment already says essentially the same thing, **do NOT leave another comment**. Only leave a comment when:
+- The task's situation has materially changed since the last review-router comment (new runs, new events)
+- The review-router is taking an action (routing, reassigning, unblocking) — always log actions
+- A task has been stale for multiple hours with no change — consider escalating instead of repeating
+
+```python
+def should_comment(review_router_comments: list[dict], new_message: str) -> bool:
+    """Return True only if the last review-router comment differs from what you'd say now."""
+    if not review_router_comments:
+        return True  # First time seeing this task
+    last = review_router_comments[-1]["body"]
+    # Simple content overlap check — if the new message rephrases the same observation, skip
+    return len(set(new_message.split()) & set(last.split())) / max(len(set(new_message.split())), 1) < 0.7
+```
+
+This prevents the board from being flooded with "Already assigned to tech-lead" every 5 minutes while still logging actual routing actions.
 
 ### What gave_up detection means for routing
 
@@ -1199,6 +1485,7 @@ If zero tasks needed routing, say so explicitly — do NOT return silent.
 - **Do NOT route gave_up tasks** — calling `kanban_unblock` on a gave_up task without fixing the root cause creates a retry death spiral (unblock → spawn → timeout → gave_up → repeat)
 - **Do NOT reassign from tech-lead** — if already assigned to tech-lead, leave it. The Tech Lead will handle it on the next dispatch cycle.
 - **Do NOT diagnose provider issues** — the Review Router's job is routing only. If you spot a bulk cascade, flag it in your report for the CoS/monitoring agent but don't try to fix provider config or reclaim tasks.
+- **Do NOT leave duplicate comments on every cycle** — the Review Router runs every 5 minutes. If you leave a comment on a skipped task ("Already assigned to tech-lead"), the next run 5 minutes later will do the same, and the run after that, creating an infinite comment loop that buries the task's real discussion. Always check the last review-router comment on the task before leaving a new one (see Comment deduplication above). If nothing has changed since the last comment, don't comment again — just report the unchanged state in your output. Only comment on actions (routing, unblocking) or when the task situation materially changed.
 - **Do NOT use `kanban_list()` as a Python tool** — it may not be available depending on profile config. Fall back to `hermes kanban list --status blocked` CLI output.
 - **Events array is the source of truth** — the `latest_summary` field may be `null` for timed-out runs. Always read the events array to detect gave_up/crashed outcomes.
 
@@ -1223,6 +1510,6 @@ The script handles all three event kinds (`gave_up`, `crashed`, `protocol_violat
 ## Reference Files
 
 - `references/audit-action-closure.md` — Pattern for creating follow-up tasks from audit/report findings instead of just documenting gaps
-- `references/marketplace-coldstart-content-seeding.md` — Strategy for seeding a marketplace with free open-licensed content to solve the cold-start problem
-- `references/scratch-gc-data-loss-rescue-2026-05-15.md` — Worked example of rescuing 80 agent-produced docs from scratch workspaces
-- `references/content-sourcing-free-caps-resources.md` — Research on free CAPS-aligned SA teaching resources for marketplace seeding
+- `references/stale-block-already-unblocked-pattern.md` — The `[ALREADY UNBLOCKED]` stale block pattern: how Tech Leads accidentally re-block tasks, detection procedure, and fix
+- `references/ready-task-duplicate-detection.md` — Worked example of detecting 8 duplicate ready tasks under a completed parent, cross-referencing titles against done tasks, and archiving them
+- `references/provider-402-credit-exhaustion.md` — HTTP 402 Insufficient Balance pattern: provider credits exhausted, monitoring agent cascade failure, the no-agent script mask signal, and prevention strategies (sentinel cron, fallback provider, reserve pool)

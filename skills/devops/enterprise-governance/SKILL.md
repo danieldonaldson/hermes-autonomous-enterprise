@@ -81,7 +81,7 @@ git commit -m "type: description of change"
 git push
 
 # Overlay repo
-cd ~/Work/hermes-yethu-overlay
+cd ~/Work/acme-corp-overlay
 git add -A && git status
 git commit -m "type: description of change"
 git push
@@ -96,7 +96,7 @@ Before committing to the framework, audit for product-specific terms. The health
 **Add a PRODUCT_BLOCKLIST to your overlay's env.sh:**
 ```bash
 # Terms that must NEVER appear in the framework repo
-export PRODUCT_BLOCKLIST="CompanyName FounderName product-domain.com Paystack WhatsApp R20 R150 CAPS teacher-specific-term another-leaky-term"
+export PRODUCT_BLOCKLIST="CompanyName FounderName product-domain.com Stripe messaging $20 $150 standards platform-specific-term another-leaky-term"
 ```
 
 The git-health-check script uses this blocklist to scan framework files. Keep it updated — whenever you discover a term that leaked, add it to the blocklist so it can't leak again.
@@ -105,9 +105,9 @@ The git-health-check script uses this blocklist to scan framework files. Keep it
 - Company/product names
 - Founder names
 - Domain names
-- Pricing: currency amounts (R20, R150, $0.0226)
+- Pricing: currency amounts (\$20, \$150, \$0.0226)
 - Tech stack: payment processors, hosting providers, specific libraries
-- Market terms: platform names (WhatsApp, Telegram), industry jargon (CAPS, curriculum)
+- Market terms: platform names (messaging, Telegram), industry jargon (standards, curriculum)
 - Chat IDs, bot tokens, API keys
 
 Use `git diff --cached` to review what you're about to commit. Grep for known product terms.
@@ -174,6 +174,19 @@ skills/devops/sync-autonomous-enterprise/templates/prompts/
 
 This way anyone forking the framework repo gets the full operating model. Cron job definitions (~/.hermes/cron/jobs.json) are local state and must be recreated on each deployment.
 
+## RULE 8: Agent-produced non-code docs use the founder-review workflow
+
+All non-code durable artifacts (reports, specs, plans, designs, analyses) produced by agents must follow this flow:
+
+1. **Write** to `docs/founder-review/<topic>.md` in the overlay repo
+2. **Review** — founder scans and approves at their convenience
+3. **Promote** — approved files move to their permanent `docs/<category>/` home
+4. **Commit** — the promotion is committed to the overlay repo
+
+The full workflow (including the destination table per artifact type) is documented in the `kanban-worker` skill under "Persistent document storage → Founder-Review Workflow."
+
+**Why this rule:** Without it, agent-produced documents land directly in company docs without founder eyes, or worse, vanish when scratch workspaces are garbage-collected. The founder-review folder is the buffer that prevents both problems.
+
 ## RULE 7: Bootstrap.sh creates the link structure
 
 The `bootstrap.sh` in the framework repo creates ALL symlinks. When adding a new role or script:
@@ -213,7 +226,7 @@ done
 
 # Check git status of both repos
 cd ~/Work/hermes-autonomous-enterprise && git status --short
-cd ~/Work/hermes-yethu-overlay && git status --short
+cd ~/Work/acme-corp-overlay && git status --short
 ```
 
 See `references/product-leak-detection.md` for grep -E compatibility notes (the `\d` pitfall), PRODUCT_BLOCKLIST format, and testing procedure.

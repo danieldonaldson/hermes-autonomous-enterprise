@@ -1,7 +1,7 @@
 ---
 name: multi-agent-team
 description: "Set up a multi-agent executive team within Hermes Agent using profiles, SOUL.md personalities, toolset configuration, and kanban coordination."
-version: 1.4.0
+version: 1.5.0
 author: Hermes Agent
 license: MIT
 platforms: [linux, macos, windows]
@@ -160,7 +160,7 @@ Once the decision to add a role has been made, wiring it in requires more than j
 
    **Variant A: Reports to an agent profile (e.g. Designer → CPO)** — update the reporting lead's SOUL.md by adding a "Your Team" or "Reports to You" section listing the new report. This ensures the lead knows to expect input from them and can delegate tasks to them. Without this, the lead won't know the role exists.
 
-   **Variant B: Reports directly to the human founder (e.g. Chief of Staff, external consultant)** — there is no agent profile to update. Instead, the new role's SOUL.md should make the reporting relationship explicit: "You report directly to Daniel (the founder), not to any other agent." The founder interacts with this role via kanban tasks or direct delegation. No parent-profile update needed.
+   **Variant B: Reports directly to the human founder (e.g. Chief of Staff, external consultant)** — there is no agent profile to update. Instead, the new role's SOUL.md should make the reporting relationship explicit: "You report directly to the founder, not to any other agent." The founder interacts with this role via kanban tasks or direct delegation. No parent-profile update needed.
 
 4. **Update the reviewer's Company Review playbook** — if the new role produces output consumed in a phase-gate review (common pattern: CEO runs Company Review blocked on all team outputs), add their domain to the CEO's assessment checklist. Without this, the reviewer won't know to evaluate their work. Skip this step if the role reports directly to the founder (the founder evaluates directly).
 
@@ -360,7 +360,7 @@ hermes kanban create \
 
 # CMO task — marketing work
 hermes kanban create \
-  "Map active SA teacher groups" \
+  "Map active user groups" \
   --body "Research channels, member counts, content types, admin contacts" \
   --assignee cmo \
   --priority 2 \
@@ -423,7 +423,7 @@ This is distinct from a Phase Gate Review in three ways:
 1. **Break the build into bounded steps** — each step is independently reviewable and produces a tangible output (compiling code, a working endpoint, a test suite). Example steps for a new project:
    - Step 1: Skeleton (project structure, Cargo.toml, error types, config, DB connection, health endpoint)
    - Step 2: Domain entities + repositories
-   - Step 3: Services (WhatsApp, Paystack, storage)
+   - Step 3: Services (WhatsApp, Stripe, storage)
    - Step 4: Wire up (handlers, routes, state machine)
 
 2. **Create one kanban task per step** — do NOT create one monolithic "build everything" task. Each step gets its own task assigned to the Engineer with a clear verification criterion.
@@ -756,7 +756,7 @@ hermes cron pause <old_job_id>
    hermes kanban block <cto_task_id> "Awaiting founder go-ahead after company review"
    ```
 
-For a concrete walkthrough of this flow in a real project (including a multi-agent team's actual execution, debugging stuck workers, protocol violations, and founder decision cycles), see the product overlay repo at `operations/team/yethu-execution-patterns.md`.
+For a concrete walkthrough of this flow in a real project (including a multi-agent team's actual execution, debugging stuck workers, protocol violations, and founder decision cycles), see the product overlay repo at `operations/team/execution-patterns.md`.
 
 ### How the flow plays out (phase gate)
 
@@ -938,6 +938,18 @@ When you create a KPI decomposition task for a C-level, the task body should inc
 ## Enterprise Sync Presentation (Every 4 Hours)
 
 The Chief of Staff runs every 4 hours (e.g. 29 8,12,16,20 * * *) and produces a structured department-by-department sync presentation for the founder. This replaces a synchronous standup meeting.
+
+### Board-Empty Detection & Same-Bottleneck Clustering
+
+After a major pipeline finishes, the board can become completely empty — zero running, ready, or todo tasks. This is distinct from a mid-week lull.
+
+**Sync report rules:**
+1. Lead with a `🔥 Major progress` callout at the top so the founder sees the win first
+2. Flag each department as idle and what's needed next (e.g. "needs next-phase spec from founder")
+3. Collapse multiple blocked tasks sharing the same root cause into one clustered item with combined effort estimate — prevents the bottleneck from looking larger than it is
+4. Save the report to `~/.hermes/plans/enterprise-sync-$(date +%Y-%m-%d-%H%M).md` for audit trail
+
+See `references/board-empty-same-bottleneck.md` for examples.
 
 ### The Pattern
 
@@ -1357,7 +1369,7 @@ Use this when:
    ```
 - **Gateways on all profiles** — only the default profile's gateway needs to run (it hosts the dispatcher). Other profiles don't need their own gateway.
 - **Stale SOUL.md** — after a product strategy session where major decisions are made (tech stack, payment model, market positioning), update ALL profile SOUL.md files. A SOUL that says "tech stack TBD" or references a generic "TpT clone" causes agents to re-litigate settled questions and wastes context. The CTO's SOUL should reflect the actual chosen stack; the CPO's should reference the actual spec docs; the CMO's should reference the accepted GTM strategy.
-- **CEO autonomously spawning CTO build tasks** — a common phase-gate mistake: the CEO's review playbook says "unblock the CTO if approved." When the founder gives conditional approval (e.g. "R25 is fine, open source model, legal later"), the CEO interprets this as the build green light, creates a CTO build task with full scope, and the dispatcher immediately spawns it — even though the founder intended to give more technical inputs first. **Fix:** the CEO's SOUL.md playbook should say "present findings to the founder and await explicit instruction" rather than "unblock the CTO." The founder should be the one who unblocks the CTO task (or says "not yet"). The CTO's build task should be created by the CTO or the founder, not autonomously by the CEO as a side effect of completing the review.
+- **CEO autonomously spawning CTO build tasks** — a common phase-gate mistake: the CEO's review playbook says "unblock the CTO if approved." When the founder gives conditional approval (e.g. "$25 is fine, open source model, legal later"), the CEO interprets this as the build green light, creates a CTO build task with full scope, and the dispatcher immediately spawns it — even though the founder intended to give more technical inputs first. **Fix:** the CEO's SOUL.md playbook should say "present findings to the founder and await explicit instruction" rather than "unblock the CTO." The founder should be the one who unblocks the CTO task (or says "not yet"). The CTO's build task should be created by the CTO or the founder, not autonomously by the CEO as a side effect of completing the review.
 - **Tech Lead never consulted** — when there's a Tech Lead (discourse partner) and the Engineer picks up a build task, the Engineer's SOUL.md must include a step to have their code reviewed by the Tech Lead before shipping. Without this step, the Engineer ships unreviewed code. **Fix:** add step to the Engineer's "How You Work" section: "After each step completes, block the task and flag it for Tech Lead review."
 - **Turn limit hits mid-build** — default `max_turns: 60` is too low for build tasks that involve file creation + cargo build + fix cycles. The agent gets blocked with "Iteration budget reached" mid-file-write. **Fix:** set `max_turns: 150` for Engineer profiles, `max_turns: 120` for Tech Lead, keep 60 for strategy/research roles. See "Configuring `max_turns` Per Role" section above.
 - **Role change without task reassignment** — if a role's responsibilities change mid-stream (e.g., CTO was building, now architects), their running tasks stay assigned to them. The dispatcher will keep spawning the old role for new runs. **Fix:** reclaim + reassign any running tasks to the new role immediately. See "Task Reassignment" section above.
@@ -1365,7 +1377,7 @@ Use this when:
 - **`hermes kanban dispatch` does not spawn workers** — it only reclaims stale claims, promotes triaged tasks, and blocks crashed/time-out tasks. Actual worker spawning happens on the gateway's polling cycle (default 60s). If a task is "ready" but not yet "running", wait for the next cycle rather than running dispatch repeatedly. If it doesn't pick up after 2 cycles, the profile config may be wrong (missing API keys, disabled kanban toolset).
 - **Dispatcher can't find profiles** — the dispatcher only discovers profiles at kanban init time. If you add profiles after init, you may need to restart the gateway.
 - **`&` in kanban task descriptions** — `hermes kanban create "Task with A & B" --assignee cto` will fail because bash interprets `&` as a backgrounding operator. The terminal tool sees the `&` and rejects the command. **Fix:** use the word "and" instead of `&`, or escape it: `A and B` / `A \& B`. This applies to `--body`, `--tags`, and any other option that accepts multi-word strings with special characters.
-- **External CLI delegation** — profiles cloned from default inherit the `claude-code`, `codex`, and `opencode` skills. These tell the agent to delegate work to an external CLI (Claude Code CLI, Codex CLI) instead of using its own tools. The Engineer should NOT have these — it should write code directly via `terminal` + `file`. Only the Tech Lead (reviewer) should keep them. If the Engineer has them, it will outsource coding to the external CLI, adding latency, consuming separate API credits, and introducing a second failure mode (external CLI hitting its own limits). **Fix:** remove these skills from all profiles except Tech Lead: `rm -rf ~/.hermes/profiles/<name>/skills/autonomous-ai-agents/{claude-code,codex,opencode}`. See the product overlay repo at `operations/team/yethu-execution-patterns.md` for the full story and recovery steps.
+- **External CLI delegation** — profiles cloned from default inherit the `claude-code`, `codex`, and `opencode` skills. These tell the agent to delegate work to an external CLI (Claude Code CLI, Codex CLI) instead of using its own tools. The Engineer should NOT have these — it should write code directly via `terminal` + `file`. Only the Tech Lead (reviewer) should keep them. If the Engineer has them, it will outsource coding to the external CLI, adding latency, consuming separate API credits, and introducing a second failure mode (external CLI hitting its own limits). **Fix:** remove these skills from all profiles except Tech Lead: `rm -rf ~/.hermes/profiles/<name>/skills/autonomous-ai-agents/{claude-code,codex,opencode}`. See the product overlay repo at `operations/team/execution-patterns.md` for the full story and recovery steps.
 
 - **Skills and cron prompts authored locally instead of the framework repo** — when building the autonomous enterprise, reusable patterns (cron prompts, operating model docs, reference examples) should be written directly to the framework repo's `skills/<category>/<name>/` directory and committed, not to `~/.hermes/skills/`. The local skills directory is for product-specific one-offs. Configure `skills.external_dirs` in `config.yaml` to point to the framework repo's skills/ so Hermes loads them from the canonical source. Cron prompt templates belong in `<skill>/templates/prompts/` so anyone forking the repo gets the full operating model.
 

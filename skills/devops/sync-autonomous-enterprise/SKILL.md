@@ -58,9 +58,37 @@ produces a department-by-department presentation for the founder:
 - 📋 Queued
 - → Review needed items with Approve/Rework/Question options
 
+**⚠️ Monitoring agent health check (mandatory first step):** Before producing
+the sync, the CoS MUST check whether other monitoring agents have been running.
+Use `hermes cron list` to check the last run status of all agent-based crons
+(PMO, COO, CEO, Review Router). If multiple failed simultaneously with the
+same error (especially HTTP 402 Insufficient Balance), note the outage
+prominently and account for the coverage gap. See the `kanban-worker` skill's
+Step 8a ("Check if monitoring agents themselves are failing") and
+`references/provider-402-credit-exhaustion.md` for the full diagnosis procedure.
+
+Signal hierarchy when checking cron health:
+- All agent-based crons failed + all script crons ok → **402 credit exhaustion** (provider billing issue). Report immediately, recommend checking provider dashboard.
+- All crons (agent + script) failed → infrastructure outage (different root cause).
+- Only one cron failed → isolated profile issue, flag in sync but less critical.
+
 **3. Fast Monitoring (between syncs)** — PMO scans every 30 min for crashes,
 Review Router runs every 5 min for block routing, Dispatcher Watchdog every
 30 min for heartbeats.
+
+**⚠️ Monitoring cascade failure pattern:** All agent-based monitoring crons
+(CoS, PMO, COO, CEO, Review Router) depend on LLM API credits from the same
+provider. When credits are exhausted (HTTP 402), ALL agent-based crons fail
+simultaneously while no-agent script crons (Dispatcher Watchdog, Kanban GC,
+Git Health Check) continue to report "ok". This masking effect creates a
+**monitoring blind spot** — the board appears healthy from infrastructure
+metrics but no oversight runs are happening.
+
+**Prevention:** Consider deploying a no-agent sentinel script (see
+`kanban-worker/references/provider-402-credit-exhaustion.md` Option B) that
+checks `hermes cron list` for error statuses on critical agent-based jobs and
+alerts if any failed — this runs on zero LLM credits so it survives provider
+outages.
 
 **4. Founder Review** — Founder reads the sync at their convenience, responds
 with Approve/Rework/Question instructions. An agent processes them
@@ -88,6 +116,7 @@ Not everything needs founder input — the CoS only flags:
 - Repeated failure patterns
 - Red/Yellow escalations since last sync
 - **Unreviewed items in `docs/founder-review/`** — the CoS checks the backlog each sync and flags any files waiting on founder sign-off
+- **Monitoring agent failures** — if any agent-based crons (PMO, COO, CEO, Review Router) failed since the last sync, flag the outage and recommend checking the provider billing dashboard
 
 Routine in-progress work and green-status items are reported for awareness
 but don't need a response.
@@ -128,8 +157,6 @@ Routine completions, green-status items, things that worked.
 **Key difference from async mode:** In async mode, the CoS packages everything
 up and waits. In live mode, the founder drives — you surface the right items
 for each category and let them dig into what matters.
-
-See `references/founder-review-session.md` for a worked example.
 
 ## Cron Job Setup
 
@@ -238,5 +265,4 @@ a crew of autonomous AI agents building the founder's product.
 - `framework/scripts/` — no-agent scripts (review-router, kanban-gc, git-health-check)
 - `templates/prompts/` — full cron job prompts
 - `references/sync-example.md` — example sync output + founder interaction
-- `references/founder-review-session.md` — worked example of a live founder review session (🔴/🟡/✅ format, decision recording, post-session commit)
 - `enterprise-governance` skill — rules for where enterprise artifacts live and how changes flow

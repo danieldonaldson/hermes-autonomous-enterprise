@@ -987,6 +987,37 @@ git show <commit>:framework/scripts/<script-name>.sh > framework/scripts/<script
 
 Or, if the repo doesn't exist yet, rebuild the script from scratch. The key invariant: the `~/.hermes/scripts/` file is a shunt, the framework file is real logic.
 
+**Pitfall — framework target script missing execute permission (`Permission denied` via shunt).**  
+The shunt script itself is executable (it has `chmod +x`), but when it calls `exec /path/to/framework/scripts/<name>.sh`, the target file must also be executable. A newly created or copied framework script may have default `644` permissions. The symptom:
+- The scheduler shows `last_status: \"error\"` with no error in `agent.log`  
+- No `HTTP 402` or tool errors — just `last_status: error`  
+- Running the shunt directly prints: `Permission denied`  
+- Running the framework target directly also fails: `bash: …/kanban-gc.sh: Permission denied`  
+- `ls -la` on the framework file shows `-rw-r--r--` instead of `-rwxr-xr-x`
+
+Diagnosis:
+\`\`\`bash
+# Run the shunt directly to see the error
+bash ~/.hermes/scripts/<script-name>.sh
+
+# Check the framework target's permissions
+ls -la /path/to/framework/scripts/<script-name>.sh
+# Look for: -rw-r--r-- (missing execute bits)
+\`\`\`
+
+Fix:
+\`\`\`bash
+chmod +x /path/to/framework/scripts/<script-name>.sh
+\`\`\`
+
+Then verify: run the shunt again — it should execute the real logic, not throw "Permission denied". This is distinct from the "double shunt" pitfall above (identical shunt code in both files causing infinite exec); here the framework file has the correct content but wrong permissions.
+
+**Check all framework scripts after creation:** new scripts in the framework repo may all share the same default mode. Run a sweep:
+\`\`\`bash
+ls -la /path/to/framework/scripts/
+# Any -rw-r--r-- entries need chmod +x
+\`\`\`
+
 List all script symlinks that would be blocked (they appear as broken to the scanner):
 \`\`\`bash
 find ~/.hermes/scripts/ -type l -xtype l
