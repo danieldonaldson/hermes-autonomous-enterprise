@@ -1,7 +1,7 @@
 ---
 name: hermes-agent
 description: "Configure, extend, or contribute to Hermes Agent."
-version: 2.2.0
+version: 2.3.0
 author: Hermes Agent + Teknium
 license: MIT
 platforms: [linux, macos, windows]
@@ -365,7 +365,7 @@ Edit with `hermes config edit` or `hermes config set section.key value`.
 | `display` | `skin`, `tool_progress`, `show_reasoning`, `show_cost` |
 | `stt` | `enabled`, `provider` (local/groq/openai/mistral) |
 | `tts` | `provider` (edge/elevenlabs/openai/minimax/mistral/neutts) |
-| `memory` | `memory_enabled`, `user_profile_enabled`, `provider` |
+| `memory` | `memory_enabled`, `user_profile_enabled`, `provider` — see `references/memory-providers.md` for comparison & self-hosting guide |
 | `security` | `tirith_enabled`, `website_blocklist` |
 | `delegation` | `model`, `provider`, `base_url`, `api_key`, `max_iterations` (50), `reasoning_effort` |
 | `checkpoints` | `enabled`, `max_snapshots` (50) |
@@ -959,7 +959,7 @@ A softer request ("always produce a status report") inside the body of the promp
 The scheduler (`cron/scheduler.py` → `_run_job_script`) validates that the resolved script path stays within `~/.hermes/scripts/`. It calls `path.resolve()` (which follows symlinks) then checks `path.relative_to(scripts_dir)` — so symlinks whose targets live outside the scripts directory tree are rejected.
 
 **Better fix — shunt scripts (instead of copying):** Create a tiny real file in `~/.hermes/scripts/` that `source`s any local `env.sh` and `exec`s the framework original by absolute path. This avoids the symlink restriction without duplicating script content — framework edits take effect immediately:
-\`\`\`bash
+```bash
 #!/bin/bash
 # Shunt — ~/.hermes/scripts/ needs real files (not symlinks).
 # Sources env.sh, then execs the canonical framework version.
@@ -967,23 +967,23 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 [ -f "$SCRIPT_DIR/env.sh" ] && source "$SCRIPT_DIR/env.sh"
 exec /path/to/framework/scripts/check-domain-available.sh "$@"
-\`\`\`
+```
 The `env.sh` can remain a symlink — bash's `source` command follows symlinks fine. Only the cron scheduler's path resolver cares about real files vs symlinks.
 
 **Pitfall — the "double shunt": framework script accidentally overwritten with shunt boilerplate.** When setting up the shunt pattern, it's easy to accidentally copy the shunt boilerplate into the *framework target file* instead of keeping the real logic there. The result is an infinite loop — the shunt `exec`s the framework file, which is identical shunt code that `exec`s itself. The cron job fails silently with `last_status: "error"` but the error log shows `PRODUCT_DOMAIN not set` (or whatever env var the real script expects) because the shunt runs standalone without env context.
 
 Detect it by running the framework target directly (without the shunt):
-\`\`\`bash
+```bash
 bash /path/to/framework/scripts/<script-name>.sh
 # If it outputs a shunt comment or execs itself → it's a double shunt
-\`\`\`
+```
 
 Fix: restore the real script from git history:
-\`\`\`bash
+```bash
 cd /path/to/framework-repo
 git log --oneline -- framework/scripts/<script-name>.sh
 git show <commit>:framework/scripts/<script-name>.sh > framework/scripts/<script-name>.sh
-\`\`\`
+```
 
 Or, if the repo doesn't exist yet, rebuild the script from scratch. The key invariant: the `~/.hermes/scripts/` file is a shunt, the framework file is real logic.
 
@@ -996,32 +996,32 @@ The shunt script itself is executable (it has `chmod +x`), but when it calls `ex
 - `ls -la` on the framework file shows `-rw-r--r--` instead of `-rwxr-xr-x`
 
 Diagnosis:
-\`\`\`bash
+```bash
 # Run the shunt directly to see the error
 bash ~/.hermes/scripts/<script-name>.sh
 
 # Check the framework target's permissions
 ls -la /path/to/framework/scripts/<script-name>.sh
 # Look for: -rw-r--r-- (missing execute bits)
-\`\`\`
+```
 
 Fix:
-\`\`\`bash
+```bash
 chmod +x /path/to/framework/scripts/<script-name>.sh
-\`\`\`
+```
 
 Then verify: run the shunt again — it should execute the real logic, not throw "Permission denied". This is distinct from the "double shunt" pitfall above (identical shunt code in both files causing infinite exec); here the framework file has the correct content but wrong permissions.
 
 **Check all framework scripts after creation:** new scripts in the framework repo may all share the same default mode. Run a sweep:
-\`\`\`bash
+```bash
 ls -la /path/to/framework/scripts/
 # Any -rw-r--r-- entries need chmod +x
-\`\`\`
+```
 
 List all script symlinks that would be blocked (they appear as broken to the scanner):
-\`\`\`bash
+```bash
 find ~/.hermes/scripts/ -type l -xtype l
-\`\`\`
+```
 Note: symlinks to files within `~/.hermes/scripts/` itself are fine — the restriction is only for symlinks whose target resolves outside the scripts directory tree.
 
 **Cron job status shows "error" but delivery says success.**
@@ -1065,7 +1065,7 @@ hermes config set auxiliary.vision.model <model_name>
 | MCP servers | `hermes mcp list` or [MCP guide](https://hermes-agent.nousresearch.com/docs/user-guide/features/mcp) |
 | Profiles | `hermes profile list` or [Profiles docs](https://hermes-agent.nousresearch.com/docs/user-guide/profiles) |
 | Cron jobs | `hermes cron list` or [Cron docs](https://hermes-agent.nousresearch.com/docs/user-guide/features/cron) |
-| Memory | `hermes memory status` or [Memory docs](https://hermes-agent.nousresearch.com/docs/user-guide/features/memory) |
+| Memory | `hermes memory status` or [Memory docs](https://hermes-agent.nousresearch.com/docs/user-guide/features/memory) — provider comparison: `references/memory-providers.md`. Honcho self-hosted troubleshooting: `references/honcho-deriver-troubleshooting.md`, peer card seeding: `references/honcho-peer-card-seeding.md`, custom LLM provider config: `references/honcho-custom-llm-provider.md` |
 | Env variables | `hermes config env-path` or [Env vars reference](https://hermes-agent.nousresearch.com/docs/reference/environment-variables) |
 | CLI commands | `hermes --help` or [CLI reference](https://hermes-agent.nousresearch.com/docs/reference/cli-commands) |
 | Gateway logs | `~/.hermes/logs/gateway.log` |

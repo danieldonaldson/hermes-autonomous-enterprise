@@ -1,7 +1,7 @@
 ---
 name: kanban-worker
 description: Pitfalls, examples, and edge cases for Hermes Kanban workers. The lifecycle itself is auto-injected into every worker's system prompt as KANBAN_GUIDANCE (from agent/prompt_builder.py); this skill is what you load when you want deeper detail on specific scenarios.
-version: 2.10.0
+version: 2.11.0
 platforms: [linux, macos, windows]
 metadata:
   hermes:
@@ -96,6 +96,81 @@ If `$HERMES_TENANT` is set, the task belongs to a tenant namespace. When reading
 
 - Good: `business-a: Acme is our biggest customer`
 - Bad (leaks): `Acme is our biggest customer`
+
+## Persistent Memory via Honcho
+
+Every kanban worker has **cross-run persistent memory** through Honcho. This is how you recall what you learned in previous runs and save knowledge that future runs of your role will need.
+
+### Your Honcho identity
+
+Your profile has a dedicated Honcho `aiPeer` set in `~/.hermes/honcho.json`. It matches your profile name — e.g., `engineer` profile → `aiPeer: "engineer"`. Use this as the `peer` argument in all Honcho tool calls:
+
+```python
+honcho_reasoning(peer='engineer', query="What do I know about this project?")
+```
+
+You can discover your own peer name by checking `honcho_profile(peer='<profile-name>')` — the card for your role should already be seeded.
+
+### Two ways Honcho remembers for you
+
+**1. Automatic (passive) — you get this for free:**
+- Every conversation turn is saved as an **observation** under your peer (`saveMessages: true`)
+- Honcho's deriver periodically synthesizes observations into **conclusions** and your **peer card**
+- On each run, Honcho pre-fetches context relevant to your task and injects it into your system prompt (hybrid recall mode)
+- You don't need to do anything for this to work — it's always on
+
+**2. Active (you must call tools) — use these to persist and recall:**
+
+| Goal | Tool |
+|---|---|
+| Recall what Honcho knows about your peer | `honcho_reasoning(peer='engineer', query=..., reasoning_level='low'/'medium'/'high')` |
+| Search raw observations cheaply | `honcho_search(peer='engineer', query=..., max_tokens=800)` |
+| Save a durable fact for future runs | `honcho_conclude(peer='engineer', conclusion="...")` |
+| Read or update your peer card | `honcho_profile(peer='engineer')` / `honcho_profile(peer='engineer', card=[...])` |
+| Get raw context without LLM synthesis | `honcho_context(peer='engineer')` |
+
+### When to save conclusions
+
+Not every observation deserves a conclusion. Save when you discover something a future run of your role will need to know:
+
+- **Project conventions** — code style, naming patterns, test setup quirks
+- **Decisions made** — why you chose approach A over B
+- **Architecture knowledge** — how components connect, where config lives
+- **Recurring issues** — gotchas, pitfalls, fragile parts of the codebase
+- **User preferences** — style corrections, workflow preferences (when profile has a dedicated user)
+
+Do NOT save:
+- **Task progress** ("deployed the rate limiter") — task output is in the kanban board
+- **Transient state** ("currently on line 42") — irrelevant next time you run
+- **Obvious tool knowledge** — Honcho is for project-specific knowledge, not tool docs
+
+### How `honcho_conclude` interacts with the deriver
+
+Honcho runs a **deriver** that periodically digests observations into conclusions. When you write a conclusion with `honcho_conclude`, it's a first-class fact that bypasses the deriver entirely — it's saved immediately and persists across sessions. The deriver also writes its own conclusions from your conversation history. Both live alongside each other.
+
+Your explicitly-saved conclusions are durable even if the deriver re-derives the peer card. The peer card (returned by `honcho_profile`) may get refreshed from observations by the deriver, but conclusions you wrote via `honcho_conclude` remain until explicitly deleted.
+
+### Peer card seeding
+
+Your role's peer card is already seeded with your role definition. When you call `honcho_profile(peer='engineer')`, you'll see facts like:
+
+```json
+[
+  "Engineer is a pure implementation role — writes code, runs tests, implements features.",
+  "Engineer has a hard iteration ceiling of 110.",
+  ...
+]
+```
+
+You can update your peer card with `honcho_profile(peer='engineer', card=[...])` to add role-specific facts you've accumulated. Note that the deriver may eventually re-derive the card from observations, so prefer `honcho_conclude` for durable facts and use the peer card for curated summaries.
+
+### Pitfalls
+
+- **Don't store task IDs or PR numbers in Honcho** — those are transient artifacts. Store the *lesson*, not the reference.
+- **Don't assume Honcho injects everything.** The pre-fetch is a summary — for deep recall, always use `honcho_reasoning` or `honcho_search`.
+- **Peer card writes can be overwritten** by the deriver if it runs an observation cycle. Use `honcho_conclude` for facts that must not be lost.
+- **`honcho_reasoning` costs tokens** — prefer `honcho_search` for cheap lookup, `honcho_reasoning` only when you need synthesis.
+- **No peer data yet?** That's normal for first-time runs. Honcho hasn't accumulated observations yet. As you work and the deriver processes your conversations, the data will grow.
 
 ## Good summary + metadata shapes
 
@@ -1509,6 +1584,7 @@ The script handles all three event kinds (`gave_up`, `crashed`, `protocol_violat
 
 ## Reference Files
 
+- `references/honcho-worker-config.md` — Honcho per-worker memory configuration, peer identities, and how workers access persistent memory
 - `references/audit-action-closure.md` — Pattern for creating follow-up tasks from audit/report findings instead of just documenting gaps
 - `references/stale-block-already-unblocked-pattern.md` — The `[ALREADY UNBLOCKED]` stale block pattern: how Tech Leads accidentally re-block tasks, detection procedure, and fix
 - `references/ready-task-duplicate-detection.md` — Worked example of detecting 8 duplicate ready tasks under a completed parent, cross-referencing titles against done tasks, and archiving them
