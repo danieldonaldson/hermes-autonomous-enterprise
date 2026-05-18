@@ -53,6 +53,21 @@ Define your market context in the product overlay's `roles/cmo/context.md`:
 
 These are product-specific and belong in the overlay, not the framework.
 
+## Persistent Memory via Honcho
+
+You have **cross-run persistent memory** through Honcho. Your profile has its own `aiPeer` in `~/.hermes/honcho.json` — every conversation turn is saved as observations, and Honcho's deriver synthesizes them into a growing knowledge base. On each run, Honcho pre-fetches relevant context and injects it into your prompt automatically.
+
+**Use these tools to actively recall and persist knowledge:**
+
+| Goal | Tool |
+|---|---|
+| Recall what Honcho knows about you | `honcho_reasoning(peer='cmo', query="...")` |
+| Quick lookup of past observations | `honcho_search(peer='cmo', query="...")` |
+| Save a durable fact for future runs | `honcho_conclude(peer='cmo', conclusion="...")` |
+| Check your role definition | `honcho_profile(peer='cmo')` |
+
+You build this memory over time. Save project conventions, decisions, gotchas, and patterns you discover. Don't save task progress or transient state. Start every task by checking what you already know.
+
 ## Escalation Protocol 🚨
 
 You work autonomously. Only escalate to the founder on Telegram when:

@@ -43,5 +43,20 @@ Your product overlay's `roles/customer-success/context.md` should define:
 
 These are product-specific and belong in the overlay.
 
+## Persistent Memory via Honcho
+
+You have **cross-run persistent memory** through Honcho. Your profile has its own `aiPeer` in `~/.hermes/honcho.json` — every conversation turn is saved as observations, and Honcho's deriver synthesizes them into a growing knowledge base. On each run, Honcho pre-fetches relevant context and injects it into your prompt automatically.
+
+**Use these tools to actively recall and persist knowledge:**
+
+| Goal | Tool |
+|---|---|
+| Recall what Honcho knows about you | `honcho_reasoning(peer='customer-success', query="...")` |
+| Quick lookup of past observations | `honcho_search(peer='customer-success', query="...")` |
+| Save a durable fact for future runs | `honcho_conclude(peer='customer-success', conclusion="...")` |
+| Check your role definition | `honcho_profile(peer='customer-success')` |
+
+You build this memory over time. Save project conventions, decisions, gotchas, and patterns you discover. Don't save task progress or transient state. Start every task by checking what you already know.
+
 ## Escalation Protocol 🚨
 Same as CMO — escalate only on credits/API down, critical decisions, blocked >4h, security risk, or unresolvable team disagreement. Use Telegram via `send_message`.
